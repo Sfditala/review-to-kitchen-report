@@ -4,7 +4,7 @@
 
 Every Sunday at 9:00, this workflow reads the week's restaurant reviews, tags each one by dish, shift and problem, and counts what repeats. Then the manager and the head chef get one email with three decisions they can act on that week, and a draft reply for every unhappy customer.
 
-The idea is simple: a complaint shouldn't stop at "sorry to hear that". If five people say the shawarma was cold on Friday night, that's a job for the kitchen.
+Review tools stop at "reply to the customer". But if five people say the shawarma was cold on Friday night, the fix is at the grill, not in the reply box.
 
 ## What happens to each review
 
@@ -26,28 +26,7 @@ Straight from my inbox, after a real run with Gemini:
 
 <p align="center"><img src="assets/gmail-real.png" alt="The weekly email in Gmail: a dark header with the restaurant name, the week's main finding (5 cold-shawarma complaints on Friday evening), four numbers, and the first of three decisions with its owner and action." width="640"></p>
 
-What's in it, top to bottom:
-
-<table>
-<tr>
-<td width="42%" valign="top"><img src="assets/email-phone.png" alt="The weekly email on a phone" width="100%"></td>
-<td valign="top">
-
-**One line at the top.** The strongest pattern of the week and what to do about it.
-
-**The week in four numbers.** Reviews, how many had a problem, how many were positive, average rating.
-
-**Three decisions.** Each one has an owner (chef, floor manager, delivery), a priority, the numbers behind it, and an action someone can check on the next shift.
-
-**The patterns.** Dish × shift, then weekend against weekdays.
-
-**Draft replies.** One per unhappy review, in the customer's language, worst first. They never promise a refund and never blame the customer. Someone still reads them before posting.
-
-<sub>The same email on a phone, about 390px wide.</sub>
-
-</td>
-</tr>
-</table>
+Top to bottom: the week's strongest pattern, four numbers, **three decisions** (each with an owner, a priority, the numbers behind it and an action to check on the next shift), the repeated patterns, and a **draft reply** for every unhappy review. The drafts never promise a refund or blame the customer, and someone reads them before posting.
 
 ## Why counting matters
 
@@ -59,38 +38,18 @@ Read one by one, every complaint looks like bad luck. Counted by day and shift, 
 
 <img src="assets/workflow.png" alt="The workflow in n8n: two triggers, Config, read the sheet, prepare the week, one batch request to the model, parse, write back to the sheet, count patterns, three decisions, build the email, send with Gmail. An error branch emails me if a scheduled run fails." width="100%">
 
-The canvas in n8n. The whole week goes to the model in **one** request (Batch request), so a run costs two model calls, not forty-one.
-
-```mermaid
-flowchart LR
-    T["Every Sunday 9:00"] --> R["Google Sheets<br/>this week's reviews"]
-    R --> F["Filter the week<br/>+ work out the shift"]
-    F --> C(("Gemini / OpenAI<br/>tag each review"))
-    C --> V["Validate"]
-    V --> W["Write tags<br/>back to the sheet"]
-    W --> G["Count patterns<br/>3 groupings"]
-    G --> D(("Gemini / OpenAI<br/>3 decisions"))
-    D --> E["Mobile email<br/>Arabic, right to left"]
-    E --> M["Gmail"]
-```
-
-## The problem
-
-Restaurant owners read bad reviews one at a time and answer them one at a time. Nobody notices that six of them are about the same dish on the same shift, so the complaint never reaches the kitchen. Review tools stop at "reply to the customer". The fix usually needs to happen at the grill.
+The canvas in n8n. Code nodes do the rules and the counting; the two HTTP nodes are the only model calls.
 
 ## How it was built
 
-**Stack:** n8n · Google Gemini Flash (free tier) (or any OpenAI-compatible model) · Google Sheets · Gmail
+**Stack:** n8n · Google Gemini Flash, free tier (any OpenAI-compatible model works) · Google Sheets · Gmail
 
 <details open>
 <summary><b>Design decisions</b></summary>
 
-- **Runs free.** Any OpenAI-compatible model works. The demo uses Gemini's free tier, paced to stay under its rate limit.
 - **The model tags, the code counts.** The decisions model never sees a review. It gets the counts from code and has to cite them. It can't say "7 complaints" when there were 5.
-- **Closed lists, not free text.** The dish comes from the menu, and the problem from a fixed list. Otherwise "شاورما", "ساندويش شاورما دجاج" and "شاورما العربي" are three dishes and nothing adds up.
-- **The shift comes from the data.** It's worked out from the visit time, not guessed from the text. Reviews almost never say "Friday night".
+- **Closed lists, checked in code.** The dish comes from the menu and the problem from a fixed list, otherwise "شاورما" and "ساندويش شاورما دجاج" are two dishes. Code checks every answer against the lists too, because not every provider enforces the schema.
 - **A written severity scale.** From 0 (no problem) to 5 (health and safety). One hair in the food outranks three salty plates.
-- **One bad answer doesn't stop the report.** It's marked ⚠️ in the sheet, and the email says how many need a look.
 - **Safe by default.** No API key inside any node. Review text is written to the sheet as plain text, so a review starting with `=` never becomes a formula, and it's escaped before it goes into the email.
 
 </details>
@@ -100,16 +59,7 @@ Restaurant owners read bad reviews one at a time and answer them one at a time. 
 
 <br>
 
-The demo data has traps with known answers, and [`data/expected-labels.csv`](data/expected-labels.csv) holds the right label for every review. The test runs the workflow's own Code nodes, read straight from `workflow.json`, with OpenAI mocked.
-
-| Planted in the data | Why |
-|---|---|
-| 5 cold-shawarma complaints, Friday evening | The pattern that has to come first |
-| 3 late deliveries, Friday and Saturday | A weekend pattern, not a shift |
-| Cold shawarma, Tuesday lunch | Must not join Friday's count |
-| 3 reviews praising the shawarma | Naming a dish isn't a complaint |
-| 2 reviews from the week before | The date filter |
-| A hair in the fattoush | One complaint, highest severity |
+The demo data has the traps shown at the top, and [`data/expected-labels.csv`](data/expected-labels.csv) holds the right label for every review. The test runs the workflow's own Code nodes, read straight from `workflow.json`, with the model mocked.
 
 ```text
 $ node dev/run-local.mjs
@@ -119,22 +69,19 @@ $ node dev/run-local.mjs
 ✅ decoy cold shawarma on Tuesday lunch is NOT merged into the Friday pattern
 ✅ delivery delays on the weekend grouped (×3)
 ✅ positive reviews never counted as issues (incl. positive shawarma R008/R036/R040)
-✅ bad model answer (R010) → flagged needs_review, run continues
+✅ one call for the whole week; a review the model skipped (R010) is flagged, run continues
 ✅ decisions model receives only aggregates (no review text)
 ✅ email: RTL, ≤640px, all user text escaped
 ✅ sheet write-back has exactly the label columns
 ```
 
-This checks the plumbing. The model itself was measured on the first real run, against the same file:
+This checks the plumbing. The model itself was measured on the first real run, against the same file. Every trap above behaved as expected:
 
 | On the real run (Gemini) | Result |
 |---|---|
 | Problem or not | **40 / 40** |
 | Right dish | **39 / 40** |
 | Right problem type | **39 / 40** |
-| The 5 planted cold-shawarma reviews | all 5, all on Friday evening |
-| Hair in the fattoush | hygiene, severity 5 |
-| Last week's reviews | untouched |
 
 The two misses are honest grey areas: R002 complains about the fries in a review that praises the shawarma, and R014's "pricey for the portion size" came out as portion instead of price.
 
@@ -148,15 +95,11 @@ The two misses are honest grey areas: R002 complains about the fries in a review
 | What the plan said | What the build needed |
 |---|---|
 | The model reads the shift from the review | Reviews don't say it. The shift is worked out in code from a new `visit_datetime` column. |
-| The dish as free text | A closed menu list, or the same dish splits into three names. |
 | One grouping: dish × shift × problem | Three. Late deliveries are a weekend pattern spread over shifts, and one grouping hid them. |
-| Nothing on severity | A written 0–5 scale, and single complaints of 4+ always reach the decisions. |
 | The OpenAI node, and an OpenAI key | One HTTP request to any OpenAI-compatible API. I didn't have an OpenAI key, so it runs on Gemini's free tier. Switching provider is two lines in Config. |
 | One model call per review | **One call for the whole week.** The first real run sent 41 calls and sat for 10 minutes retrying. Batched, a run takes about 1.5 minutes and two calls. |
 | Pick a model name and move on | The first name I chose was retired for new keys (404), the newest one was overloaded (503). I listed the models the key can use and picked a stable one. |
-| Trust the model's output format | `json_schema` asks for the lists, and code checks every answer anyway, because not every provider enforces the schema strictly. |
 | "Read this week's reviews" | A filter with a demo date, and date parsing for both text and Sheets' serial numbers. |
-| Nothing on bad answers | Validation that flags the review and lets the run continue. |
 | A sheet tab named `reviews` | Google names the tab itself when it converts a CSV (here: "Untitled"), and its ID isn't 0: the first real run failed with *Sheet with ID 0 not found*. The tab name is now a Config value. I also tried finding the tab through the Sheets API, but n8n Cloud doesn't allow Google credentials inside HTTP Request nodes. |
 
 </details>
