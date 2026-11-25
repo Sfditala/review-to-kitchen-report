@@ -6,7 +6,8 @@ return [{
     // Google Sheet ID: the long string in the URL between /d/ and /edit
     // Google Sheet ID: the long string in the sheet's URL between /d/ and /edit
     sheet_id: 'YOUR_GOOGLE_SHEET_ID',
-    // Tab by ID (gid in the URL: ...#gid=0). 0 = first tab, survives renaming.
+    // Tab ID: the number after #gid= in the sheet's URL. Survives renaming the tab.
+    // (A sheet created from a CSV import does NOT get gid 0; copy it from the URL.)
     sheet_gid: '0',
 
     // Who gets the weekly email (comma separated)
