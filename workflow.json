@@ -2,7 +2,7 @@
   "name": "D1 · review-to-kitchen-report",
   "nodes": [
     {
-      "id": "2a956e55-0ea5-46d8-82e3-16de6a9da164",
+      "id": "196485b0-da30-4cda-93f7-b37fd4480e9b",
       "name": "Note · Setup",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -18,7 +18,7 @@
       }
     },
     {
-      "id": "5a5f67ba-9e72-4966-9a96-0c55f7994e5e",
+      "id": "9f94c833-f57c-4d01-9431-2746564b5ae9",
       "name": "Every Sunday 09:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -43,7 +43,7 @@
       }
     },
     {
-      "id": "fae6c0db-4416-41aa-93e2-ea8a3e507663",
+      "id": "b040225c-4675-4d1d-9297-3e3d5711dbba",
       "name": "Run manually (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -54,7 +54,7 @@
       "parameters": {}
     },
     {
-      "id": "5b40f40b-2ae1-41a4-9bfc-e5ed0d130b69",
+      "id": "d3225a67-0fd4-4799-a5ef-b46322c5a9ca",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -63,11 +63,11 @@
         300
       ],
       "parameters": {
-        "jsCode": "// ============================================================\n//  ⚙️ CONFIG: the only node you need to edit\n// ============================================================\nreturn [{\n  json: {\n    // Google Sheet ID: the long string in the sheet's URL between /d/ and /edit\n    sheet_id: 'YOUR_GOOGLE_SHEET_ID',\n    // Tab name, exactly as it appears at the bottom of the sheet.\n    // A sheet created by importing a CSV may call it \"Untitled\" or \"Sheet1\".\n    sheet_tab: 'Sheet1',\n\n    // Who gets the weekly email (comma separated)\n    report_to: 'YOUR_EMAIL@example.com',\n\n    restaurant_name: 'بيت الصاج',\n    // Language model, through the OpenAI-compatible chat API.\n    // Credential: \"Header Auth\" with Name = Authorization, Value = Bearer <your key>.\n    //   FREE  · Google Gemini (key from aistudio.google.com/apikey):\n    llm_url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',\n    model: 'gemini-2.5-flash',\n    //   PAID  · OpenAI: llm_url 'https://api.openai.com/v1/chat/completions', model 'gpt-4.1-mini'\n\n    // Week window. reference_date = \"today\" for the filter.\n    //   DEMO: '2026-11-22' → reads the demo week 15–21 Nov 2026\n    //   PRODUCTION: '' → uses the real date when the Schedule fires\n    reference_date: '2026-11-22',\n    lookback_days: 7,\n\n    // Shift split: visits before this hour = lunch (غداء), after = evening (مسائي)\n    evening_starts_at_hour: 16,\n    // Jordan weekend = Friday (5) + Saturday (6)\n    weekend_days: [5, 6],\n\n    // Closed list of dishes → the model can't invent new dish names,\n    // so \"شاورما\" and \"ساندويش شاورما دجاج\" end up in the same bucket.\n    menu: ['شاورما', 'فلافل', 'حمص', 'فتة', 'منسف', 'مشاوي مشكلة', 'كبة', 'فتوش', 'بطاطا', 'خبز', 'كنافة', 'عصائر'],\n  },\n}];\n"
+        "jsCode": "// ============================================================\n//  ⚙️ CONFIG: the only node you need to edit\n// ============================================================\nreturn [{\n  json: {\n    // Google Sheet ID: the long string in the sheet's URL between /d/ and /edit\n    sheet_id: 'YOUR_GOOGLE_SHEET_ID',\n    // Tab name, exactly as it appears at the bottom of the sheet.\n    // A sheet created by importing a CSV may call it \"Untitled\" or \"Sheet1\".\n    sheet_tab: 'Sheet1',\n\n    // Who gets the weekly email (comma separated)\n    report_to: 'YOUR_EMAIL@example.com',\n\n    restaurant_name: 'بيت الصاج',\n    // Language model, through the OpenAI-compatible chat API.\n    // Credential: \"Header Auth\" with Name = Authorization, Value = Bearer <your key>.\n    //   FREE  · Google Gemini (key from aistudio.google.com/apikey):\n    llm_url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',\n    model: 'gemini-3.8-flash',\n    //   PAID  · OpenAI: llm_url 'https://api.openai.com/v1/chat/completions', model 'gpt-4.1-mini'\n\n    // Week window. reference_date = \"today\" for the filter.\n    //   DEMO: '2026-11-22' → reads the demo week 15–21 Nov 2026\n    //   PRODUCTION: '' → uses the real date when the Schedule fires\n    reference_date: '2026-11-22',\n    lookback_days: 7,\n\n    // Shift split: visits before this hour = lunch (غداء), after = evening (مسائي)\n    evening_starts_at_hour: 16,\n    // Jordan weekend = Friday (5) + Saturday (6)\n    weekend_days: [5, 6],\n\n    // Closed list of dishes → the model can't invent new dish names,\n    // so \"شاورما\" and \"ساندويش شاورما دجاج\" end up in the same bucket.\n    menu: ['شاورما', 'فلافل', 'حمص', 'فتة', 'منسف', 'مشاوي مشكلة', 'كبة', 'فتوش', 'بطاطا', 'خبز', 'كنافة', 'عصائر'],\n  },\n}];\n"
       }
     },
     {
-      "id": "67a8299e-3f7e-492a-b334-59d3011f992d",
+      "id": "04d135fd-38ef-47ff-bc9f-7ffd924fb1c5",
       "name": "Read reviews",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -97,7 +97,7 @@
       }
     },
     {
-      "id": "60bbf6da-190e-4307-b62c-1b3a36a58e95",
+      "id": "65144796-bc2a-4850-b055-172af4197718",
       "name": "Prepare week",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -110,7 +110,7 @@
       }
     },
     {
-      "id": "6cc7fcd4-d9a9-4f39-a0cf-5deb73a1da50",
+      "id": "d5374751-657a-4d95-89c5-ab6283e45b58",
       "name": "Batch request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -123,7 +123,7 @@
       }
     },
     {
-      "id": "02f4f37e-6421-4ef3-8026-bc9485229d87",
+      "id": "e365ece6-4a96-4880-b32f-9f0965dec2be",
       "name": "Classify reviews (LLM)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -148,7 +148,7 @@
       }
     },
     {
-      "id": "347e7a7d-f756-4074-8a16-e43538dd2eaa",
+      "id": "b3da10fc-b0b0-44b0-84c3-2827b0594414",
       "name": "Parse classification",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -161,7 +161,7 @@
       }
     },
     {
-      "id": "1341f275-9e49-4b21-ab4e-6651a8118cee",
+      "id": "a549b33a-1c34-4e8f-9402-33f31fc668c9",
       "name": "Sheet columns",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -174,7 +174,7 @@
       }
     },
     {
-      "id": "57ac121d-a6d5-4495-be9c-2d9c3c33deca",
+      "id": "458adbbb-a281-49a3-9667-f02ed87e426c",
       "name": "Write labels to sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -282,7 +282,7 @@
       }
     },
     {
-      "id": "5182a761-7f9e-405b-9f51-9b8c1babf9be",
+      "id": "86b5efd5-1158-483d-93ac-eca4e42ce7a7",
       "name": "Aggregate patterns",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -295,7 +295,7 @@
       }
     },
     {
-      "id": "d5572f9f-c33f-4f90-9818-ff4fa27379d0",
+      "id": "b8da54b9-3341-4a45-9fbf-821b096cd960",
       "name": "Write 3 decisions (LLM)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -320,7 +320,7 @@
       }
     },
     {
-      "id": "cc1ec8de-5043-4ccb-a216-f87688302d4b",
+      "id": "b9894771-c690-48d8-824b-7357048668ce",
       "name": "Build email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -333,7 +333,7 @@
       }
     },
     {
-      "id": "40b5c207-1d98-4b6b-ab40-097b41674dcb",
+      "id": "33ce484e-f7ce-4976-bef4-38859bcec3ed",
       "name": "Send report (Gmail)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -352,7 +352,7 @@
       }
     },
     {
-      "id": "0806b873-c2b8-43e3-95dc-59e27b158e05",
+      "id": "093db73d-e24d-4d7b-b171-e8f68d3fd305",
       "name": "Note · Classify",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -368,7 +368,7 @@
       }
     },
     {
-      "id": "4b2d9701-0689-4676-aefe-65fd77113a93",
+      "id": "8dc94dfa-31ff-4961-a3e4-0fd536e07c7d",
       "name": "Note · Count",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -384,7 +384,7 @@
       }
     },
     {
-      "id": "755d20bf-4911-4a06-a59b-5a6eca5dfa92",
+      "id": "4a9ce256-f6cf-485c-a9c4-b918a575404c",
       "name": "Note · Report",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,

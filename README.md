@@ -72,7 +72,7 @@ Restaurant owners read bad reviews one at a time and answer them one at a time. 
 
 ## How it was built
 
-**Stack:** n8n · Google Gemini 2.5 Flash, free tier (or any OpenAI-compatible model) · Google Sheets · Gmail
+**Stack:** n8n · Google Gemini Flash (free tier) (or any OpenAI-compatible model) · Google Sheets · Gmail
 
 <details open>
 <summary><b>Design decisions</b></summary>
