@@ -37,7 +37,7 @@ These are reviews from the demo data, in Arabic, dialect and English, the way th
 
 **Draft replies.** One per unhappy review, in the customer's language, worst first. They never promise a refund and never blame the customer. Someone still reads them before posting.
 
-<sub>From the offline test. The numbers and tables are real output of the workflow's code. The decision and reply wording is a stand-in, because the model isn't called in that test.</sub>
+<sub>The real email from the first successful run in n8n, with Gemini writing the decisions and replies.</sub>
 
 </td>
 </tr>
@@ -119,7 +119,18 @@ $ node dev/run-local.mjs
 ✅ sheet write-back has exactly the label columns
 ```
 
-This checks the plumbing. How well the model itself tags the reviews gets measured on the first real run, against the same file.
+This checks the plumbing. The model itself was measured on the first real run, against the same file:
+
+| On the real run (Gemini) | Result |
+|---|---|
+| Problem or not | **40 / 40** |
+| Right dish | **39 / 40** |
+| Right problem type | **39 / 40** |
+| The 5 planted cold-shawarma reviews | all 5, all on Friday evening |
+| Hair in the fattoush | hygiene, severity 5 |
+| Last week's reviews | untouched |
+
+The two misses are honest grey areas: R002 complains about the fries in a review that praises the shawarma, and R014's "pricey for the portion size" came out as portion instead of price.
 
 </details>
 
@@ -134,7 +145,9 @@ This checks the plumbing. How well the model itself tags the reviews gets measur
 | The dish as free text | A closed menu list, or the same dish splits into three names. |
 | One grouping: dish × shift × problem | Three. Late deliveries are a weekend pattern spread over shifts, and one grouping hid them. |
 | Nothing on severity | A written 0–5 scale, and single complaints of 4+ always reach the decisions. |
-| The OpenAI node, and an OpenAI key | One HTTP request to any OpenAI-compatible API. I didn't have an OpenAI key, so it runs on Gemini's free tier, one review every 6.5 seconds. Switching provider is two lines in Config. |
+| The OpenAI node, and an OpenAI key | One HTTP request to any OpenAI-compatible API. I didn't have an OpenAI key, so it runs on Gemini's free tier. Switching provider is two lines in Config. |
+| One model call per review | **One call for the whole week.** The first real run sent 41 calls and sat for 10 minutes retrying. Batched, a run takes about 1.5 minutes and two calls. |
+| Pick a model name and move on | The first name I chose was retired for new keys (404), the newest one was overloaded (503). I listed the models the key can use and picked a stable one. |
 | Trust the model's output format | `json_schema` asks for the lists, and code checks every answer anyway, because not every provider enforces the schema strictly. |
 | "Read this week's reviews" | A filter with a demo date, and date parsing for both text and Sheets' serial numbers. |
 | Nothing on bad answers | Validation that flags the review and lets the run continue. |
@@ -249,7 +262,7 @@ Schedule (أحد 9:00)
 2. Import [`data/reviews.csv`](data/reviews.csv) into a new Google Sheet.
 3. In the **Config** node, set `sheet_id`, `sheet_tab` (the tab's name) and `report_to`.
 4. Connect Google Sheets and Gmail, plus a **Header Auth** credential for the model: name `Authorization`, value `Bearer <your key>` (a free Gemini key from Google AI Studio works). Set `D0 · error-alert` as the error workflow in Settings.
-5. Run **Execute workflow**. On the free tier the email arrives in about 5 minutes, because reviews are sent one at a time to stay under the rate limit. For production, clear `reference_date` and publish.
+5. Run **Execute workflow**. The email arrives in about 2 minutes. For production, clear `reference_date` and publish.
 
 Full setup in Arabic, including Google OAuth and costs: [`docs/SETUP.md`](docs/SETUP.md). What to check after the first run: [`docs/review-checklist.md`](docs/review-checklist.md).
 
