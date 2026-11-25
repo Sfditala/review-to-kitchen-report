@@ -11,7 +11,7 @@ const id = () => randomUUID();
 const X = 260; // horizontal spacing
 
 const sheetDoc = { __rl: true, mode: 'id', value: "={{ $('Config').first().json.sheet_id }}" };
-const sheetTab = { __rl: true, mode: 'id', value: "={{ $('Config').first().json.sheet_gid }}" };
+const sheetTab = { __rl: true, mode: 'name', value: "={{ $('Config').first().json.sheet_tab }}" };
 // Optional dev/local.json (git-ignored) fills in my own IDs and writes workflow.local.json for import.
 // The committed workflow.json always keeps placeholders, like my other repos.
 import { existsSync } from 'node:fs';
@@ -147,6 +147,7 @@ if (local) {
     if (n.name === 'Config') {
       n.parameters.jsCode = n.parameters.jsCode
         .replace("'YOUR_GOOGLE_SHEET_ID'", JSON.stringify(local.sheet_id))
+        .replace("sheet_tab: 'Sheet1'", `sheet_tab: ${JSON.stringify(local.sheet_tab || 'Sheet1')}`)
         .replace("'YOUR_EMAIL@example.com'", JSON.stringify(local.report_to || 'YOUR_EMAIL@example.com'));
     }
     if (n.type === 'n8n-nodes-base.googleSheets' && local.sheets_credential) {

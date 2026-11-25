@@ -136,7 +136,7 @@ This checks the plumbing. How well the model itself tags the reviews gets measur
 | Trust the model's output format | `json_schema` asks for the lists, and code checks every answer anyway, because not every provider enforces the schema strictly. |
 | "Read this week's reviews" | A filter with a demo date, and date parsing for both text and Sheets' serial numbers. |
 | Nothing on bad answers | Validation that flags the review and lets the run continue. |
-| A sheet tab named `reviews` | Google names the tab itself when it converts a CSV. The tab is read by its ID instead, and that ID isn't 0 either: the first real run failed with *Sheet with ID 0 not found*. |
+| A sheet tab named `reviews` | Google names the tab itself when it converts a CSV (here: "Untitled"), and its ID isn't 0: the first real run failed with *Sheet with ID 0 not found*. The tab name is now a Config value. I also tried finding the tab through the Sheets API, but n8n Cloud doesn't allow Google credentials inside HTTP Request nodes. |
 
 </details>
 
@@ -245,7 +245,7 @@ Schedule (أحد 9:00)
 
 1. In n8n, go to **Workflows → Import from File** and choose [`shared/error-alert.workflow.json`](shared/error-alert.workflow.json), then [`workflow.json`](workflow.json).
 2. Import [`data/reviews.csv`](data/reviews.csv) into a new Google Sheet.
-3. In the **Config** node, set `sheet_id` and `sheet_gid` (the number after `#gid=` in the sheet's URL) and `report_to`.
+3. In the **Config** node, set `sheet_id`, `sheet_tab` (the tab's name) and `report_to`.
 4. Connect Google Sheets and Gmail, plus a **Header Auth** credential for the model: name `Authorization`, value `Bearer <your key>` (a free Gemini key from Google AI Studio works). Set `D0 · error-alert` as the error workflow in Settings.
 5. Run **Execute workflow**. On the free tier the email arrives in about 5 minutes, because reviews are sent one at a time to stay under the rate limit. For production, clear `reference_date` and publish.
 

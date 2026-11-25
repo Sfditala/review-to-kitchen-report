@@ -28,9 +28,7 @@
 1. Google Sheets ← شيت جديد ← **File ← Import ← Upload** ← `data/reviews.csv` ← **Replace current sheet**
 2. انسخ الـ ID من الرابط (بين `/d/` و `/edit`) وحطه بـ `sheet_id` بـ **Config**
 
-3. انسخ الرقم اللي بعد `#gid=` بنفس الرابط وحطه بـ `sheet_gid`. شيت انعمل من CSV ما بياخد `0`.
-
-القراءة بالـ ID مش بالاسم، فتغيير اسم التاب ما بيفرق. والأعمدة الفاضية (`dish` … `classified_at`) لازم تضل موجودة.
+3. اكتب اسم التاب (تحت بالشيت) بـ `sheet_tab`. لما Google بيحوّل CSV لشيت ممكن يسمّيه `Untitled` أو `Sheet1`. والأعمدة الفاضية (`dish` … `classified_at`) لازم تضل موجودة.
 
 > لازم يكون حساب Google المربوط بـ credential الـ Sheets بيقدر يفتح الشيت (مالك أو Editor).
 
