@@ -2,7 +2,7 @@
   "name": "D1 · review-to-kitchen-report",
   "nodes": [
     {
-      "id": "196485b0-da30-4cda-93f7-b37fd4480e9b",
+      "id": "0991469e-c407-41de-8dab-f931e0562da9",
       "name": "Note · Setup",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -18,7 +18,7 @@
       }
     },
     {
-      "id": "9f94c833-f57c-4d01-9431-2746564b5ae9",
+      "id": "5073365f-eddb-4074-92c7-7f2517807a2f",
       "name": "Every Sunday 09:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -43,7 +43,7 @@
       }
     },
     {
-      "id": "b040225c-4675-4d1d-9297-3e3d5711dbba",
+      "id": "729401b7-2384-4258-a6a5-3a697f211d17",
       "name": "Run manually (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -54,7 +54,7 @@
       "parameters": {}
     },
     {
-      "id": "d3225a67-0fd4-4799-a5ef-b46322c5a9ca",
+      "id": "86d1656b-d357-4db6-8fcf-248ee6476277",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -67,7 +67,7 @@
       }
     },
     {
-      "id": "04d135fd-38ef-47ff-bc9f-7ffd924fb1c5",
+      "id": "ab2f6f98-98d1-45f8-96db-2175a15f637b",
       "name": "Read reviews",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -97,7 +97,7 @@
       }
     },
     {
-      "id": "65144796-bc2a-4850-b055-172af4197718",
+      "id": "408fad9c-63f9-4e43-a197-1066f7734081",
       "name": "Prepare week",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -110,7 +110,7 @@
       }
     },
     {
-      "id": "d5374751-657a-4d95-89c5-ab6283e45b58",
+      "id": "43385f55-611f-4395-a536-889b2cd74ea1",
       "name": "Batch request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -123,7 +123,7 @@
       }
     },
     {
-      "id": "e365ece6-4a96-4880-b32f-9f0965dec2be",
+      "id": "58da6c31-92cc-4126-93b6-149398c8e7bf",
       "name": "Classify reviews (LLM)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -132,7 +132,7 @@
         300
       ],
       "retryOnFail": true,
-      "maxTries": 2,
+      "maxTries": 3,
       "waitBetweenTries": 5000,
       "parameters": {
         "method": "POST",
@@ -148,7 +148,7 @@
       }
     },
     {
-      "id": "b3da10fc-b0b0-44b0-84c3-2827b0594414",
+      "id": "553b0ffb-79c0-4bfa-bc18-59ae82644c8c",
       "name": "Parse classification",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -161,7 +161,7 @@
       }
     },
     {
-      "id": "a549b33a-1c34-4e8f-9402-33f31fc668c9",
+      "id": "5b8ac5b2-bd83-46c0-b907-f1bb611af887",
       "name": "Sheet columns",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -174,7 +174,7 @@
       }
     },
     {
-      "id": "458adbbb-a281-49a3-9667-f02ed87e426c",
+      "id": "49f6c1af-e6f8-47b1-8cd2-1f8e94c40766",
       "name": "Write labels to sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -282,7 +282,7 @@
       }
     },
     {
-      "id": "86b5efd5-1158-483d-93ac-eca4e42ce7a7",
+      "id": "52ad1b6b-6455-48fb-a8cd-cb4bd1ca4982",
       "name": "Aggregate patterns",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -295,7 +295,7 @@
       }
     },
     {
-      "id": "b8da54b9-3341-4a45-9fbf-821b096cd960",
+      "id": "052cab79-7fa2-4169-8a91-c95db140d923",
       "name": "Write 3 decisions (LLM)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -304,7 +304,7 @@
         300
       ],
       "retryOnFail": true,
-      "maxTries": 2,
+      "maxTries": 3,
       "waitBetweenTries": 5000,
       "parameters": {
         "method": "POST",
@@ -320,7 +320,7 @@
       }
     },
     {
-      "id": "b9894771-c690-48d8-824b-7357048668ce",
+      "id": "4a9298c6-0a98-4dd2-9b8e-e5b980108a1e",
       "name": "Build email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -333,7 +333,7 @@
       }
     },
     {
-      "id": "33ce484e-f7ce-4976-bef4-38859bcec3ed",
+      "id": "d58c7643-47ae-47a1-add0-4f8f5104bc7d",
       "name": "Send report (Gmail)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -352,7 +352,7 @@
       }
     },
     {
-      "id": "093db73d-e24d-4d7b-b171-e8f68d3fd305",
+      "id": "5b1cd03e-fd4c-4e23-bc41-03d156ae4513",
       "name": "Note · Classify",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -368,7 +368,7 @@
       }
     },
     {
-      "id": "8dc94dfa-31ff-4961-a3e4-0fd536e07c7d",
+      "id": "91b6b792-48af-48f9-bffc-71abfd7bdd77",
       "name": "Note · Count",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -384,7 +384,7 @@
       }
     },
     {
-      "id": "4a9ce256-f6cf-485c-a9c4-b918a575404c",
+      "id": "8c95ae48-33f5-4be0-a33d-86ad73346722",
       "name": "Note · Report",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,

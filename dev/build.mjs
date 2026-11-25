@@ -20,8 +20,8 @@ const local = existsSync(localPath) ? JSON.parse(readFileSync(localPath, 'utf8')
 
 const openAiCall = (name, pos, batch) => ({
   id: id(), name, type: 'n8n-nodes-base.httpRequest', typeVersion: 4.2, position: pos,
-  // Two tries only: on a free tier a failed call should not burn the daily quota with retries.
-  retryOnFail: true, maxTries: 2, waitBetweenTries: 5000,
+  // 3 tries: Gemini sometimes answers 503 (high demand) for a moment. Only 2 calls per run, so retries are cheap.
+  retryOnFail: true, maxTries: 3, waitBetweenTries: 5000,
   parameters: {
     method: 'POST',
     // Works with any OpenAI-compatible chat API (Gemini free tier, OpenAI, Groq…): URL and model live in Config.
