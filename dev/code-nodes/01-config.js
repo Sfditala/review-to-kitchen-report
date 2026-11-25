@@ -1,0 +1,33 @@
+// ============================================================
+//  ⚙️ CONFIG: the only node you need to edit
+// ============================================================
+return [{
+  json: {
+    // Google Sheet ID: the long string in the URL between /d/ and /edit
+    // Demo sheet already created: "D1 · reviews · review-to-kitchen-report"
+    sheet_id: '1JyvYcGDssD6m7Fe5A9oXMXmVIAdsyUePnDZUQ2IEoe8',
+    // Tab by ID (gid in the URL: ...#gid=0). 0 = first tab, survives renaming.
+    sheet_gid: '0',
+
+    // Who gets the weekly email (comma separated)
+    report_to: 'YOUR_EMAIL@example.com',
+
+    restaurant_name: 'بيت الصاج',
+    model: 'gpt-4.1-mini',
+
+    // Week window. reference_date = "today" for the filter.
+    //   DEMO: '2026-11-22' → reads the demo week 15–21 Nov 2026
+    //   PRODUCTION: '' → uses the real date when the Schedule fires
+    reference_date: '2026-11-22',
+    lookback_days: 7,
+
+    // Shift split: visits before this hour = lunch (غداء), after = evening (مسائي)
+    evening_starts_at_hour: 16,
+    // Jordan weekend = Friday (5) + Saturday (6)
+    weekend_days: [5, 6],
+
+    // Closed list of dishes → the model can't invent new dish names,
+    // so "شاورما" and "ساندويش شاورما دجاج" end up in the same bucket.
+    menu: ['شاورما', 'فلافل', 'حمص', 'فتة', 'منسف', 'مشاوي مشكلة', 'كبة', 'فتوش', 'بطاطا', 'خبز', 'كنافة', 'عصائر'],
+  },
+}];

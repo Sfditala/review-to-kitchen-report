@@ -1,0 +1,552 @@
+{
+  "name": "D1 · review-to-kitchen-report",
+  "nodes": [
+    {
+      "id": "297de1a4-71db-453b-891d-2502de305e8e",
+      "name": "Note · Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        20
+      ],
+      "parameters": {
+        "content": "## ⚙️ قبل أول تشغيل\n1. **Config** ← حطي إيميلك بـ `report_to` (الشيت جاهز ومربوط)\n2. credentials:\n   - **Read reviews** + **Write labels** ← Google Sheets ✅ (موجود)\n   - **Classify** + **Decisions** ← OpenAI API (جديد)\n   - **Send report** ← Gmail OAuth2 (جديد)\n3. للديمو: خلّي `reference_date = 2026-11-22`\n4. للإنتاج: `reference_date = ''` ثم **Publish**\n\n🔐 ولا مفتاح مكتوب بأي node.",
+        "width": 420,
+        "height": 420,
+        "color": 4
+      }
+    },
+    {
+      "id": "21184f98-acc0-4894-9902-3c86783b1aca",
+      "name": "Every Sunday 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [
+                0
+              ],
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3418db86-05e7-420e-9da0-951ec62cb315",
+      "name": "Run manually (test)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        400
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "11ecf28a-6195-4fb1-83f2-3ebec5a31e00",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// ============================================================\n//  ⚙️ CONFIG: the only node you need to edit\n// ============================================================\nreturn [{\n  json: {\n    // Google Sheet ID: the long string in the URL between /d/ and /edit\n    // Demo sheet already created: \"D1 · reviews · review-to-kitchen-report\"\n    sheet_id: '1JyvYcGDssD6m7Fe5A9oXMXmVIAdsyUePnDZUQ2IEoe8',\n    // Tab by ID (gid in the URL: ...#gid=0). 0 = first tab, survives renaming.\n    sheet_gid: '0',\n\n    // Who gets the weekly email (comma separated)\n    report_to: 'YOUR_EMAIL@example.com',\n\n    restaurant_name: 'بيت الصاج',\n    model: 'gpt-4.1-mini',\n\n    // Week window. reference_date = \"today\" for the filter.\n    //   DEMO: '2026-11-22' → reads the demo week 15–21 Nov 2026\n    //   PRODUCTION: '' → uses the real date when the Schedule fires\n    reference_date: '2026-11-22',\n    lookback_days: 7,\n\n    // Shift split: visits before this hour = lunch (غداء), after = evening (مسائي)\n    evening_starts_at_hour: 16,\n    // Jordan weekend = Friday (5) + Saturday (6)\n    weekend_days: [5, 6],\n\n    // Closed list of dishes → the model can't invent new dish names,\n    // so \"شاورما\" and \"ساندويش شاورما دجاج\" end up in the same bucket.\n    menu: ['شاورما', 'فلافل', 'حمص', 'فتة', 'منسف', 'مشاوي مشكلة', 'كبة', 'فتوش', 'بطاطا', 'خبز', 'كنافة', 'عصائر'],\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "758305fb-46d7-4da7-81c1-bf2b265bc707",
+      "name": "Read reviews",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        340,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WxSZcXk0rgmlIA9K",
+          "name": "Google Sheets account"
+        }
+      },
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Config').first().json.sheet_id }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Config').first().json.sheet_gid }}"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "SERIAL_NUMBER"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "98514e56-bb90-4456-b44c-c36d1ac2b708",
+      "name": "Prepare week",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Filter this week's reviews, compute the shift FROM THE DATA (not from the model),\n// and build one OpenAI Structured Output request per review.\nconst cfg = $('Config').first().json;\n\nconst DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];\nconst ISSUE_TYPES = [\n  'cold_food', 'taste_quality', 'portion_size', 'hygiene', 'wait_time', 'delivery_delay',\n  'order_accuracy', 'packaging', 'staff_behavior', 'price', 'ambience', 'other', 'none',\n];\n\n// Sheets may return a date as a serial number (auto-detected) or as text.\n// All times are handled as \"wall clock\" via UTC methods, so no timezone shift.\nfunction parseWallClock(v) {\n  if (v === null || v === undefined || v === '') return null;\n  if (typeof v === 'number') return new Date(Date.UTC(1899, 11, 30) + Math.round(v * 86400000));\n  const m = String(v).trim().match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})(?:[ T](\\d{1,2}):(\\d{2}))?/);\n  if (!m) return null;\n  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0)));\n}\n\nfunction todayWallClock() {\n  if (cfg.reference_date) return parseWallClock(cfg.reference_date);\n  // $now is a Luxon DateTime in the workflow timezone (Asia/Amman)\n  return new Date(Date.UTC($now.year, $now.month - 1, $now.day));\n}\n\nconst end = todayWallClock();                                   // exclusive\nconst start = new Date(end.getTime() - cfg.lookback_days * 86400000);\nconst fmt = (d) => d.toISOString().slice(0, 10);\n\nconst systemPrompt = `You classify restaurant reviews for the kitchen and floor managers of \"${cfg.restaurant_name}\" (Amman, Jordan).\nReviews may be in Modern Standard Arabic, Levantine/Jordanian dialect, or English.\n\nReturn ONLY the JSON defined by the schema. Rules:\n- dish: the menu item the review is mainly about. Use \"عام\" when the point is not about a specific dish (delivery, staff, wait, ambience, general praise). Use \"غير محدد\" only if a dish is clearly meant but cannot be identified. A \"ساندويش\" in a shawarma context is \"شاورما\".\n- issue_type: the PRIMARY problem. \"none\" if the review has no complaint at all.\n  cold_food = food served cold/lukewarm. delivery_delay = late delivery (even if the food arrived cold because of it). wait_time = slow service or crowding in the restaurant.\n- severity (0-5): 0 = no problem. 1 = minor remark inside a positive review. 2 = noticeable problem. 3 = clear failure that spoiled part of the meal. 4 = ruined the visit / customer says they won't return. 5 = health or safety (hair, foreign object, food poisoning, allergen).\n- sentiment: overall tone.\n- summary: Arabic, max 12 words, factual, no exaggeration.\n- reply_draft: ONLY if the review contains a complaint or the rating is 3 or less; otherwise \"\". Same language as the review (dialect → warm, clear Arabic). Max 60 words. Thank them, acknowledge the specific issue, say what will be checked. Never promise refunds or free meals, never blame the customer, never invent facts. Sign as \"${cfg.restaurant_name}\".`;\n\nconst out = [];\nfor (const item of $input.all()) {\n  const r = item.json;\n  if (!r.review_id || !String(r.review_text || '').trim()) continue;\n\n  const visit = parseWallClock(r.visit_datetime) || parseWallClock(r.review_date);\n  if (!visit || visit < start || visit >= end) continue;\n\n  const dow = visit.getUTCDay();\n  const part = visit.getUTCHours() < cfg.evening_starts_at_hour ? 'غداء' : 'مسائي';\n\n  const row = {\n    review_id: String(r.review_id),\n    visit_date: fmt(visit),\n    visit_hour: visit.getUTCHours(),\n    weekday: dow,\n    shift: `${DAYS_AR[dow]} · ${part}`,\n    week_part: cfg.weekend_days.includes(dow) ? 'الويكند' : 'أيام الدوام',\n    source: r.source || '',\n    rating: Number(r.rating) || null,\n    reviewer: r.reviewer || '',\n    review_text: String(r.review_text).trim(),\n  };\n\n  row.openai_body = {\n    model: cfg.model,\n    temperature: 0,\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: `Rating: ${row.rating ?? 'n/a'}/5\\nSource: ${row.source}\\nReview:\\n${row.review_text}` },\n    ],\n    response_format: {\n      type: 'json_schema',\n      json_schema: {\n        name: 'review_classification',\n        strict: true,\n        schema: {\n          type: 'object',\n          additionalProperties: false,\n          required: ['dish', 'issue_type', 'severity', 'sentiment', 'summary', 'reply_draft'],\n          properties: {\n            dish: { type: 'string', enum: [...cfg.menu, 'عام', 'غير محدد'] },\n            issue_type: { type: 'string', enum: ISSUE_TYPES },\n            severity: { type: 'integer', enum: [0, 1, 2, 3, 4, 5] },\n            sentiment: { type: 'string', enum: ['positive', 'mixed', 'negative'] },\n            summary: { type: 'string' },\n            reply_draft: { type: 'string' },\n          },\n        },\n      },\n    },\n  };\n  out.push({ json: row });\n}\n\n// Keep the window on every item so later nodes (and the email) can show it.\nconst window = { from: fmt(start), to: fmt(new Date(end.getTime() - 86400000)) };\nreturn out.map((o) => ({ json: { ...o.json, week: window } }));\n"
+      }
+    },
+    {
+      "id": "08a4f4c1-76dd-491c-baea-41b12b9bc4dc",
+      "name": "Classify review (OpenAI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.openai_body) }}",
+        "options": {
+          "timeout": 60000,
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 1000
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "ded3fb60-697c-458b-98d3-409c2e757b06",
+      "name": "Parse classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Join each OpenAI response back to its review (same order, 1:1) and validate it.\n// Anything the model returns that breaks the rules is corrected here, in code.\nconst reviews = $('Prepare week').all();\nconst responses = $input.all();\nif (reviews.length !== responses.length) {\n  throw new Error(`Got ${responses.length} classifications for ${reviews.length} reviews`);\n}\n\nconst classifiedAt = $now.toFormat('yyyy-MM-dd HH:mm');\n\nreturn reviews.map((rev, i) => {\n  const { openai_body, ...row } = rev.json;\n  const res = responses[i].json;\n  let c = null;\n  let needs_review = false;\n\n  try {\n    const msg = res.choices[0].message;\n    if (msg.refusal) throw new Error('refusal');\n    c = JSON.parse(msg.content);\n  } catch (e) {\n    needs_review = true;\n    c = { dish: 'غير محدد', issue_type: 'other', severity: 2, sentiment: 'mixed',\n          summary: 'تعذّر التصنيف تلقائياً، راجعها يدوياً', reply_draft: '' };\n  }\n\n  // Consistency rules\n  if (c.issue_type === 'none') c.severity = 0;\n  if (c.issue_type !== 'none' && c.severity === 0) c.severity = 1;\n\n  const is_issue = c.issue_type !== 'none';\n  const is_negative = (row.rating !== null && row.rating <= 3) || c.severity >= 3;\n\n  return {\n    json: {\n      ...row,\n      dish: c.dish,\n      issue_type: c.issue_type,\n      severity: c.severity,\n      sentiment: c.sentiment,\n      summary: c.summary,\n      reply_draft: is_negative || is_issue ? c.reply_draft : '',\n      is_issue,\n      is_negative,\n      needs_review,\n      classified_at: classifiedAt,\n      tokens: res.usage ? res.usage.total_tokens : null,\n    },\n  };\n});\n"
+      }
+    },
+    {
+      "id": "3a9e6892-db30-4d01-84d1-40ba7d5a7ad0",
+      "name": "Sheet columns",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Only the columns we write back to the sheet. review_id is the match key.\nconst ISSUE_AR = {\n  cold_food: 'أكل بارد', taste_quality: 'طعم/جودة', portion_size: 'الكمية', hygiene: 'نظافة',\n  wait_time: 'انتظار', delivery_delay: 'تأخير توصيل', order_accuracy: 'غلط بالطلب',\n  packaging: 'تغليف', staff_behavior: 'تعامل الموظفين', price: 'السعر', ambience: 'الأجواء',\n  other: 'أخرى', none: 'لا يوجد',\n};\n\nreturn $input.all().map(({ json: r }) => ({\n  json: {\n    review_id: r.review_id,\n    dish: r.dish,\n    shift: r.shift,\n    issue_type: ISSUE_AR[r.issue_type] || r.issue_type,\n    severity: r.severity,\n    summary: r.needs_review ? `⚠️ ${r.summary}` : r.summary,\n    reply_draft: r.reply_draft,\n    classified_at: r.classified_at,\n  },\n}));\n"
+      }
+    },
+    {
+      "id": "28d0e683-35a6-4e52-88d2-b62e27423c3c",
+      "name": "Write labels to sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1640,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WxSZcXk0rgmlIA9K",
+          "name": "Google Sheets account"
+        }
+      },
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Config').first().json.sheet_id }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Config').first().json.sheet_gid }}"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "review_id"
+          ],
+          "schema": [
+            {
+              "id": "review_id",
+              "displayName": "review_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dish",
+              "displayName": "dish",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "shift",
+              "displayName": "shift",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "issue_type",
+              "displayName": "issue_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "severity",
+              "displayName": "severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reply_draft",
+              "displayName": "reply_draft",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "classified_at",
+              "displayName": "classified_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW",
+          "handlingExtraData": "ignoreIt"
+        }
+      }
+    },
+    {
+      "id": "6a4ce63e-2d57-4c21-bc77-0dbd78087b4d",
+      "name": "Aggregate patterns",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Counting happens HERE in code, not inside the model.\n// The model only receives the finished numbers and turns them into decisions.\nconst cfg = $('Config').first().json;\nconst rows = $('Parse classification').all().map((i) => i.json);\n\nconst ISSUE_AR = {\n  cold_food: 'أكل بارد', taste_quality: 'طعم/جودة', portion_size: 'الكمية', hygiene: 'نظافة',\n  wait_time: 'انتظار', delivery_delay: 'تأخير توصيل', order_accuracy: 'غلط بالطلب',\n  packaging: 'تغليف', staff_behavior: 'تعامل الموظفين', price: 'السعر', ambience: 'الأجواء',\n  other: 'أخرى', none: 'لا يوجد',\n};\n\nconst issues = rows.filter((r) => r.is_issue);\n\nfunction groupBy(list, keyFields) {\n  const map = new Map();\n  for (const r of list) {\n    const key = keyFields.map((f) => r[f]).join(' | ');\n    if (!map.has(key)) {\n      const g = { count: 0, severity_sum: 0, review_ids: [], visit_hours: [], examples: [] };\n      keyFields.forEach((f) => (g[f] = r[f]));\n      map.set(key, g);\n    }\n    const g = map.get(key);\n    g.count++;\n    g.severity_sum += r.severity;\n    g.review_ids.push(r.review_id);\n    g.visit_hours.push(r.visit_hour);\n    if (g.examples.length < 3) g.examples.push(r.summary);\n  }\n  return [...map.values()]\n    .map((g) => ({ ...g, issue_ar: ISSUE_AR[g.issue_type], severity_avg: +(g.severity_sum / g.count).toFixed(1) }))\n    .sort((a, b) => b.count - a.count || b.severity_sum - a.severity_sum);\n}\n\nconst byDishShiftIssue = groupBy(issues, ['dish', 'shift', 'issue_type']);\nconst byIssueWeekPart = groupBy(issues, ['issue_type', 'week_part']);\nconst byDishIssue = groupBy(issues, ['dish', 'issue_type']);\n\nconst rated = rows.filter((r) => r.rating !== null);\nconst stats = {\n  total: rows.length,\n  issues: issues.length,\n  negative: rows.filter((r) => r.is_negative).length,\n  positive: rows.filter((r) => !r.is_issue).length,\n  avg_rating: rated.length ? +(rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(1) : null,\n  needs_review: rows.filter((r) => r.needs_review).length,\n  tokens: rows.reduce((s, r) => s + (r.tokens || 0), 0),\n};\n\nconst strip = ({ review_ids, severity_sum, ...g }) => g;\nconst llmInput = {\n  week: rows[0] ? rows[0].week : null,\n  stats,\n  repeated_patterns_same_dish_same_shift: byDishShiftIssue.filter((g) => g.count >= 2).slice(0, 8).map(strip),\n  issue_by_week_part: byIssueWeekPart.filter((g) => g.count >= 2).slice(0, 6).map(strip),\n  dish_issue_all_shifts: byDishIssue.filter((g) => g.count >= 2).slice(0, 6).map(strip),\n  critical_single_complaints: issues.filter((r) => r.severity >= 4)\n    .map((r) => ({ dish: r.dish, shift: r.shift, issue_ar: ISSUE_AR[r.issue_type], severity: r.severity, summary: r.summary })),\n};\n\nconst systemPrompt = `You are an operations consultant for \"${cfg.restaurant_name}\", a restaurant in Amman.\nYou get a weekly digest of customer complaints that was ALREADY counted by code. Write exactly 3 operational decisions for the manager and the head chef.\n\nRules:\n- Decision 1 MUST address the first item of repeated_patterns_same_dish_same_shift (the strongest repeated pattern), if it exists.\n- Decisions 2 and 3: the next strongest patterns. A critical single complaint (severity 5, hygiene/safety) outranks weaker repeated patterns.\n- evidence: cite ONLY numbers present in the input (counts, shifts, visit_hours). Never invent numbers, staff names or causes stated as facts. A likely cause must be phrased as a hypothesis to check (\"غالباً\"، \"تأكدوا إذا\").\n- action: one concrete, physical action that can be checked during the next shift (who checks what, when). Not \"improve quality\".\n- If visit_hours show a time window, use it (e.g. between 18:00 and 21:30).\n- Language: clear, simple Arabic (Jordanian-friendly), short sentences.\n- headline: one line, format: \"⚠️ <dish> بشفت <shift>: <count> شكاوى <issue>. الاقتراح: <short action>\"`;\n\nconst decisionsBody = {\n  model: cfg.model,\n  temperature: 0.2,\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: JSON.stringify(llmInput) },\n  ],\n  response_format: {\n    type: 'json_schema',\n    json_schema: {\n      name: 'weekly_decisions',\n      strict: true,\n      schema: {\n        type: 'object',\n        additionalProperties: false,\n        required: ['headline', 'decisions'],\n        properties: {\n          headline: { type: 'string' },\n          decisions: {\n            type: 'array',\n            items: {\n              type: 'object',\n              additionalProperties: false,\n              required: ['title', 'evidence', 'action', 'owner', 'priority'],\n              properties: {\n                title: { type: 'string' },\n                evidence: { type: 'string' },\n                action: { type: 'string' },\n                owner: { type: 'string', enum: ['الشيف', 'مدير الصالة', 'مسؤول التوصيل', 'الإدارة'] },\n                priority: { type: 'string', enum: ['عالية', 'متوسطة', 'منخفضة'] },\n              },\n            },\n          },\n        },\n      },\n    },\n  },\n};\n\nreturn [{ json: { stats, byDishShiftIssue, byIssueWeekPart, llmInput, decisionsBody } }];\n"
+      }
+    },
+    {
+      "id": "b3f525e5-e724-495c-82c2-57b7179c7f7c",
+      "name": "Write 3 decisions (OpenAI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.decisionsBody) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "a456d03e-7713-47c2-8684-31097a563a76",
+      "name": "Build email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Build a mobile-friendly RTL HTML email (inline styles only: Gmail strips <style>).\nconst cfg = $('Config').first().json;\nconst agg = $('Aggregate patterns').first().json;\nconst rows = $('Parse classification').all().map((i) => i.json);\nconst res = $input.first().json;\n\nlet plan;\ntry {\n  plan = JSON.parse(res.choices[0].message.content);\n} catch (e) {\n  throw new Error('Could not parse decisions from OpenAI: ' + JSON.stringify(res).slice(0, 300));\n}\nconst decisions = (plan.decisions || []).slice(0, 3);\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst sevColor = (s) => (s >= 5 ? '#b42318' : s >= 3 ? '#c2410c' : '#a16207');\nconst prioColor = { 'عالية': '#b42318', 'متوسطة': '#c2410c', 'منخفضة': '#4b5563' };\nconst stars = (n) => (n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '');\nconst week = rows[0] ? rows[0].week : { from: '', to: '' };\nconst { stats } = agg;\n\nconst FONT = \"font-family:Tahoma,Arial,sans-serif;\";\nconst card = 'background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin:0 0 12px;';\nconst h2 = 'font-size:16px;margin:22px 0 10px;color:#111827;';\n\nconst statCell = (label, value, color) =>\n  `<td style=\"width:25%;text-align:center;padding:10px 4px;background:#f9fafb;border-radius:8px;\">\n     <div style=\"font-size:20px;font-weight:bold;color:${color};\">${esc(value)}</div>\n     <div style=\"font-size:12px;color:#6b7280;\">${label}</div></td>`;\n\nconst decisionsHtml = decisions.map((d, i) => `\n  <div style=\"${card}border-right:4px solid ${prioColor[d.priority] || '#4b5563'};\">\n    <div style=\"font-size:12px;color:${prioColor[d.priority] || '#4b5563'};font-weight:bold;\">قرار ${i + 1} · أولوية ${esc(d.priority)} · ${esc(d.owner)}</div>\n    <div style=\"font-size:15px;font-weight:bold;margin:6px 0;color:#111827;\">${esc(d.title)}</div>\n    <div style=\"font-size:13px;color:#374151;margin:0 0 6px;\">📊 ${esc(d.evidence)}</div>\n    <div style=\"font-size:13px;color:#111827;background:#f0fdf4;border-radius:6px;padding:8px;\">✅ ${esc(d.action)}</div>\n  </div>`).join('');\n\nconst tableRow = (cells, header = false) =>\n  `<tr>${cells.map((c) => `<${header ? 'th' : 'td'} style=\"padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:right;font-size:13px;${header ? 'color:#6b7280;font-weight:normal;' : ''}\">${c}</${header ? 'th' : 'td'}>`).join('')}</tr>`;\n\nconst repeated = agg.byDishShiftIssue.filter((g) => g.count >= 2);\nconst singles = agg.byDishShiftIssue.filter((g) => g.count === 1).length;\nconst patternsHtml = repeated.length\n  ? `<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\">\n      ${tableRow(['الصحن · الشفت', 'المشكلة', 'العدد', 'الحدّة'], true)}\n      ${repeated.map((g) => tableRow([\n        `<b>${esc(g.dish)}</b><br><span style=\"color:#6b7280;font-size:12px;\">${esc(g.shift)}</span>`,\n        esc(g.issue_ar), `<b>${g.count}</b>`,\n        `<span style=\"color:${sevColor(g.severity_avg)};\">${g.severity_avg}/5</span>`])).join('')}\n    </table>`\n  : '<p style=\"font-size:13px;color:#6b7280;\">ما في أنماط متكررة لنفس الصحن بنفس الشفت هالأسبوع.</p>';\n\nconst weekPart = agg.byIssueWeekPart.filter((g) => g.count >= 2);\nconst weekPartHtml = weekPart.length\n  ? `<div style=\"font-size:13px;font-weight:bold;margin:16px 0 0;color:#111827;\">📅 حسب الفترة (كل الأصناف)</div>\n    <table role=\"presentation\" style=\"width:100%;border-collapse:collapse;margin-top:4px;\">\n      ${tableRow(['المشكلة', 'الفترة', 'العدد'], true)}\n      ${weekPart.map((g) => tableRow([esc(g.issue_ar), esc(g.week_part), `<b>${g.count}</b>`])).join('')}\n    </table>` : '';\n\nconst negatives = rows.filter((r) => r.reply_draft).sort((a, b) => b.severity - a.severity);\nconst repliesHtml = negatives.map((r) => `\n  <div style=\"${card}\">\n    <div style=\"font-size:12px;color:#6b7280;\">${esc(r.review_id)} · ${esc(r.source)} · ${esc(r.shift)} · <span style=\"color:#d97706;\">${stars(r.rating)}</span></div>\n    <div style=\"font-size:13px;color:#374151;margin:6px 0;\">«${esc(r.review_text.slice(0, 220))}»</div>\n    <div style=\"font-size:12px;color:${sevColor(r.severity)};margin:0 0 6px;\">${esc(r.summary)}</div>\n    <div style=\"font-size:13px;color:#111827;background:#f3f4f6;border-radius:6px;padding:8px;\" dir=\"auto\">✍️ ${esc(r.reply_draft)}</div>\n  </div>`).join('');\n\nconst sheetUrl = `https://docs.google.com/spreadsheets/d/${cfg.sheet_id}`;\n\nconst html = `<!doctype html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n<body style=\"margin:0;padding:0;background:#f3f4f6;\">\n<div dir=\"rtl\" style=\"${FONT}max-width:600px;margin:0 auto;padding:16px;background:#f3f4f6;color:#111827;line-height:1.6;\">\n  <div style=\"font-size:13px;color:#6b7280;\">${esc(cfg.restaurant_name)} · تقرير المراجعات الأسبوعي</div>\n  <div style=\"font-size:12px;color:#9ca3af;margin-bottom:12px;\">${esc(week.from)} ← ${esc(week.to)}</div>\n\n  <div style=\"background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:14px 16px;font-size:16px;font-weight:bold;color:#9a3412;\">${esc(plan.headline)}</div>\n\n  <table role=\"presentation\" style=\"width:100%;border-collapse:separate;border-spacing:6px;margin:12px 0;\"><tr>\n    ${statCell('مراجعة', stats.total, '#111827')}\n    ${statCell('فيها مشكلة', stats.issues, '#c2410c')}\n    ${statCell('إيجابية', stats.positive, '#15803d')}\n    ${statCell('معدّل التقييم', stats.avg_rating ?? '-', '#d97706')}\n  </tr></table>\n\n  <h2 style=\"${h2}\">🎯 3 قرارات لهالأسبوع</h2>\n  ${decisionsHtml}\n\n  <h2 style=\"${h2}\">🔁 الأنماط المتكررة (نفس الصحن · نفس الشفت)</h2>\n  <div style=\"${card}\">${patternsHtml}${weekPartHtml}\n    <div style=\"font-size:12px;color:#6b7280;margin-top:8px;\">+ ${singles} شكوى منفردة (التفاصيل بالشيت)</div>\n  </div>\n\n  <h2 style=\"${h2}\">✍️ مسودات ردود جاهزة (${negatives.length})</h2>\n  <div style=\"font-size:12px;color:#6b7280;margin:-4px 0 8px;\">راجعها قبل النشر. المسودة ما بتوعد بتعويض.</div>\n  ${repliesHtml}\n\n  ${stats.needs_review ? `<div style=\"${card}color:#b42318;font-size:13px;\">⚠️ ${stats.needs_review} مراجعة ما انصنّفت تلقائياً، معلّمة بالشيت.</div>` : ''}\n\n  <div style=\"text-align:center;margin:20px 0 8px;\">\n    <a href=\"${sheetUrl}\" style=\"display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;\">افتح الشيت الكامل</a>\n  </div>\n  <div style=\"font-size:11px;color:#9ca3af;text-align:center;\">تقرير تلقائي · التصنيف بالذكاء الاصطناعي، والعدّ بالكود</div>\n</div></body></html>`;\n\nreturn [{\n  json: {\n    to: cfg.report_to,\n    subject: `📋 مراجعات الأسبوع · ${cfg.restaurant_name} · ${week.from} ← ${week.to}`,\n    headline: plan.headline,\n    decisions,\n    html,\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "79736cf4-ec30-4fa4-b7d9-3d4873b218e6",
+      "name": "Send report (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2680,
+        300
+      ],
+      "webhookId": "edc6364b-1805-4206-850d-4ff4c056e5d3",
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "86ec7d67-1f44-4232-bca0-60e95d4f6a12",
+      "name": "Note · Classify",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        40
+      ],
+      "parameters": {
+        "content": "### 1 · تصنيف كل مراجعة\n- الشفت **بينحسب بالكود** من `visit_datetime`، مش من الموديل\n- الصحن من **قائمة مغلقة** (المنيو بـ Config)\n- Structured Output (`json_schema strict`)",
+        "width": 560,
+        "height": 200,
+        "color": 1
+      }
+    },
+    {
+      "id": "eca15675-9fed-478a-a524-436a971941bc",
+      "name": "Note · Count",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        40
+      ],
+      "parameters": {
+        "content": "### 2 · العدّ بالكود\nصحن × شفت × مشكلة، مرتّب بالتكرار ثم مجموع الحدّة.\nالموديل بياخد **الأرقام الجاهزة** بس.",
+        "width": 500,
+        "height": 200,
+        "color": 1
+      }
+    },
+    {
+      "id": "6bcd1841-4fb4-42fd-90d7-b081cc0bca45",
+      "name": "Note · Report",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2120,
+        40
+      ],
+      "parameters": {
+        "content": "### 3 · قرارات + إيميل\n3 قرارات تشغيلية + جدول الأنماط + مسودات الردود.\nHTML بعرض 600px و RTL للجوال.",
+        "width": 560,
+        "height": 200,
+        "color": 1
+      }
+    }
+  ],
+  "connections": {
+    "Every Sunday 09:00": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run manually (test)": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Read reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read reviews": {
+      "main": [
+        [
+          {
+            "node": "Prepare week",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare week": {
+      "main": [
+        [
+          {
+            "node": "Classify review (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify review (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Parse classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse classification": {
+      "main": [
+        [
+          {
+            "node": "Sheet columns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheet columns": {
+      "main": [
+        [
+          {
+            "node": "Write labels to sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write labels to sheet": {
+      "main": [
+        [
+          {
+            "node": "Aggregate patterns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate patterns": {
+      "main": [
+        [
+          {
+            "node": "Write 3 decisions (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 3 decisions (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Build email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build email": {
+      "main": [
+        [
+          {
+            "node": "Send report (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Amman",
+    "saveManualExecutions": true
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

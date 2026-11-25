@@ -1,0 +1,54 @@
+{
+  "name": "D0 · error-alert",
+  "nodes": [
+    {
+      "id": "aade468c-f7e5-40a6-968a-f9280455d5ec",
+      "name": "On workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "239e9752-11c8-46a3-adb6-9499969148e3",
+      "name": "Email the error",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        260,
+        0
+      ],
+      "webhookId": "dd04880a-9d0d-40c0-bc5e-f52504e65f97",
+      "parameters": {
+        "sendTo": "YOUR_EMAIL@example.com",
+        "subject": "=❌ {{ $json.workflow.name }} فشل",
+        "emailType": "html",
+        "message": "=<div dir=\"rtl\" style=\"font-family:Tahoma,Arial\"><b>Workflow:</b> {{ $json.workflow.name }}<br><b>Node:</b> {{ $json.execution.lastNodeExecuted }}<br><b>الخطأ:</b> {{ $json.execution.error.message }}<br><a href=\"{{ $json.execution.url }}\">افتح التنفيذ</a></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "On workflow error": {
+      "main": [
+        [
+          {
+            "node": "Email the error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Amman"
+  }
+}

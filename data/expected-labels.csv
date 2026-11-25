@@ -1,0 +1,43 @@
+review_id,in_week,expected_dish,expected_issue_type,expected_is_issue,planted
+R001,yes,حمص,none,no,
+R002,yes,بطاطا,taste_quality,yes,
+R003,yes,منسف,none,no,
+R004,yes,حمص,taste_quality,yes,
+R005,yes,عام,none,no,
+R006,yes,كنافة,none,no,
+R007,yes,شاورما,cold_food,yes,decoy_cold_tuesday
+R008,yes,شاورما,none,no,positive_shawarma
+R009,yes,فتوش,taste_quality,yes,
+R010,yes,عام,ambience,yes,
+R011,yes,فلافل,none,no,
+R012,yes,مشاوي مشكلة,order_accuracy,yes,
+R013,yes,عام,none,no,
+R014,yes,مشاوي مشكلة,price,yes,
+R015,yes,فتة,none,no,
+R016,yes,عام,none,no,
+R017,yes,عام,wait_time,yes,
+R018,yes,كبة,none,no,
+R019,yes,منسف,none,no,
+R020,yes,خبز,taste_quality,yes,
+R021,yes,شاورما,cold_food,yes,shawarma_cold_fri_eve
+R022,yes,شاورما,cold_food,yes,shawarma_cold_fri_eve
+R023,yes,شاورما,cold_food,yes,shawarma_cold_fri_eve
+R024,yes,شاورما,cold_food,yes,shawarma_cold_fri_eve
+R025,yes,شاورما,cold_food,yes,shawarma_cold_fri_eve
+R026,yes,عام,delivery_delay,yes,delivery_weekend
+R027,yes,كنافة,none,no,
+R028,yes,عام,wait_time,yes,
+R029,yes,عام,delivery_delay,yes,delivery_weekend
+R030,yes,فلافل,none,no,
+R031,yes,فلافل,taste_quality,yes,
+R032,yes,عام,delivery_delay,yes,delivery_weekend
+R033,yes,عصائر,none,no,
+R034,yes,عام,staff_behavior,yes,
+R035,yes,مشاوي مشكلة,none,no,
+R036,yes,شاورما,none,no,positive_shawarma
+R037,yes,عام,none,no,
+R038,yes,فتوش,hygiene,yes,
+R039,yes,حمص,packaging,yes,
+R040,yes,شاورما,none,no,positive_shawarma
+R041,no,عام,wait_time,yes,outside_week
+R042,no,شاورما,cold_food,yes,outside_week
