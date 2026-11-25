@@ -68,7 +68,7 @@ const repliesHtml = negatives.map((r) => `
     <div style="font-size:13px;color:#111827;background:#f3f4f6;border-radius:6px;padding:8px;" dir="auto">✍️ ${esc(r.reply_draft)}</div>
   </div>`).join('');
 
-const sheetUrl = `https://docs.google.com/spreadsheets/d/${cfg.sheet_id}`;
+const sheetUrl = 'https://docs.google.com' + `/spreadsheets/d/${cfg.sheet_id}`;
 
 const html = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f3f4f6;">

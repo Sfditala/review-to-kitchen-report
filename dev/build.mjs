@@ -12,8 +12,11 @@ const X = 260; // horizontal spacing
 
 const sheetDoc = { __rl: true, mode: 'id', value: "={{ $('Config').first().json.sheet_id }}" };
 const sheetTab = { __rl: true, mode: 'id', value: "={{ $('Config').first().json.sheet_gid }}" };
-// Existing credential in the n8n instance (ID is not a secret). On another instance n8n just asks you to pick one.
-const sheetsCred = { googleSheetsOAuth2Api: { id: 'WxSZcXk0rgmlIA9K', name: 'Google Sheets account' } };
+// Optional dev/local.json (git-ignored) fills in my own IDs and writes workflow.local.json for import.
+// The committed workflow.json always keeps placeholders, like my other repos.
+import { existsSync } from 'node:fs';
+const localPath = join(here, 'local.json');
+const local = existsSync(localPath) ? JSON.parse(readFileSync(localPath, 'utf8')) : null;
 
 const openAiCall = (name, pos, batch) => ({
   id: id(), name, type: 'n8n-nodes-base.httpRequest', typeVersion: 4.2, position: pos,
@@ -63,7 +66,6 @@ const nodes = [
   codeNode('Config', '01-config.js', [X * 0 + 80, y]),
 
   { id: id(), name: 'Read reviews', type: 'n8n-nodes-base.googleSheets', typeVersion: 4.5, position: [X * 1 + 80, y],
-    credentials: sheetsCred,
     parameters: {
       documentId: sheetDoc, sheetName: sheetTab,
       options: { outputFormatting: { values: { general: 'UNFORMATTED_VALUE', date: 'SERIAL_NUMBER' } } },
@@ -75,7 +77,6 @@ const nodes = [
   codeNode('Sheet columns', '04-sheet-columns.js', [X * 5 + 80, y]),
 
   { id: id(), name: 'Write labels to sheet', type: 'n8n-nodes-base.googleSheets', typeVersion: 4.5, position: [X * 6 + 80, y],
-    credentials: sheetsCred,
     parameters: {
       operation: 'update', documentId: sheetDoc, sheetName: sheetTab,
       columns: {
@@ -93,7 +94,6 @@ const nodes = [
   codeNode('Build email', '06-build-email.js', [X * 9 + 80, y]),
 
   { id: id(), name: 'Send report (Gmail)', type: 'n8n-nodes-base.gmail', typeVersion: 2.1, position: [X * 10 + 80, y],
-    webhookId: id(),
     parameters: {
       sendTo: '={{ $json.to }}', subject: '={{ $json.subject }}', emailType: 'html', message: '={{ $json.html }}',
       options: { appendAttribution: false },
@@ -139,12 +139,28 @@ const workflow = {
 };
 writeFileSync(join(here, '..', 'workflow.json'), JSON.stringify(workflow, null, 2) + '\n');
 
+if (local) {
+  const mine = JSON.parse(JSON.stringify(workflow));
+  for (const n of mine.nodes) {
+    if (n.name === 'Config') {
+      n.parameters.jsCode = n.parameters.jsCode
+        .replace("'YOUR_GOOGLE_SHEET_ID'", JSON.stringify(local.sheet_id))
+        .replace("'YOUR_EMAIL@example.com'", JSON.stringify(local.report_to || 'YOUR_EMAIL@example.com'));
+    }
+    if (n.type === 'n8n-nodes-base.googleSheets' && local.sheets_credential) {
+      n.credentials = { googleSheetsOAuth2Api: local.sheets_credential };
+    }
+  }
+  writeFileSync(join(here, '..', 'workflow.local.json'), JSON.stringify(mine, null, 2) + '\n');
+  console.log('workflow.local.json written with your own IDs (git-ignored)');
+}
+
 // ---------- Shared error-alert workflow (one for all 7 days) ----------
 const errorWf = {
   name: 'D0 · error-alert',
   nodes: [
     { id: id(), name: 'On workflow error', type: 'n8n-nodes-base.errorTrigger', typeVersion: 1, position: [0, 0], parameters: {} },
-    { id: id(), name: 'Email the error', type: 'n8n-nodes-base.gmail', typeVersion: 2.1, position: [260, 0], webhookId: id(),
+    { id: id(), name: 'Email the error', type: 'n8n-nodes-base.gmail', typeVersion: 2.1, position: [260, 0],
       parameters: {
         sendTo: 'YOUR_EMAIL@example.com',
         subject: "=❌ {{ $json.workflow.name }} فشل",

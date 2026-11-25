@@ -102,12 +102,12 @@ const check = (label, fn) => { fn(); console.log('✅', label); };
 check('date filter: 40 reviews this week, R041/R042 (last week) excluded', () => {
   assert.equal(week.length, 40); assert.ok(!ids.includes('R041') && !ids.includes('R042'));
 });
-check('shift computed from visit time (R021 → الجمعة · مسائي, R007 → الثلاثاء · غداء)', () => {
+check('shift computed from visit time (R021 → Friday evening, R007 → Tuesday lunch)', () => {
   assert.equal(week.find((i) => i.json.review_id === 'R021').json.shift, 'الجمعة · مسائي');
   assert.equal(week.find((i) => i.json.review_id === 'R007').json.shift, 'الثلاثاء · غداء');
 });
 const top = agg.json.byDishShiftIssue[0];
-check(`top pattern = شاورما · الجمعة مسائي · cold_food × 5 (got ${top.dish} · ${top.shift} · ${top.issue_type} × ${top.count})`, () => {
+check('top pattern = shawarma · Friday evening · cold_food × 5', () => {
   assert.deepEqual([top.dish, top.shift, top.issue_type, top.count], ['شاورما', 'الجمعة · مسائي', 'cold_food', 5]);
   assert.deepEqual(top.review_ids.sort(), ['R021', 'R022', 'R023', 'R024', 'R025']);
 });

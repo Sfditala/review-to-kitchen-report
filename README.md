@@ -1,213 +1,112 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
-    <img src="assets/hero-light.svg" alt="من شكوى زبون لأمر شغل بالمطبخ" width="100%">
-  </picture>
-</p>
+<p align="center"><img src="assets/banner.svg" alt="Five bad reviews. One kitchen order." width="100%"></p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/n8n-workflow-EA4B71?logo=n8n&logoColor=white" alt="n8n">
-  <img src="https://img.shields.io/badge/OpenAI-Structured_Outputs-412991?logo=openai&logoColor=white" alt="OpenAI Structured Outputs">
-  <img src="https://img.shields.io/badge/Google_Sheets-34A853?logo=googlesheets&logoColor=white" alt="Google Sheets">
-  <img src="https://img.shields.io/badge/Gmail-EA4335?logo=gmail&logoColor=white" alt="Gmail">
-  <img src="https://img.shields.io/badge/tests-10%2F10_passing-2ea44f" alt="tests 10/10">
-  <img src="https://img.shields.io/badge/docs-README--first-f47230" alt="README-first">
-</p>
+> **Demo · fictional restaurant, sample data.** Day 1 of my *7 Days · 7 Projects* challenge.
 
-<h3 align="center">صاحب المطعم بيقرأ 5 مراجعات سيئة… وما بيعرف إنهم عن <b>نفس الصحن، بنفس الشفت</b>.</h3>
+Every Sunday at 9:00, this workflow reads the week's restaurant reviews, tags each one by dish, shift and problem, and counts what repeats. Then the manager and the head chef get one email with three decisions they can act on that week, and a draft reply for every unhappy customer.
 
-<p align="center">
-  <i>A weekly n8n + OpenAI workflow that turns scattered restaurant reviews into 3 concrete kitchen decisions.</i><br>
-  <a href="#demo">النتيجة</a> · <a href="#how">كيف بيشتغل</a> · <a href="#proof">الإثبات</a> · <a href="#run">شغّله</a> · <a href="#docs-experiment">تجربة التوثيق</a>
-</p>
+The idea is simple: a complaint shouldn't stop at "sorry to hear that". If five people say the shawarma was cold on Friday night, that's a job for the kitchen.
 
----
+## What happens to each review
 
-## بنظرة
+These are reviews from the demo data, in Arabic, dialect and English, the way they actually come in.
 
-| 📥 بيدخل | ⚙️ بيصير | 📤 بيطلع |
-|:---|:---|:---|
-| **40 مراجعة** بالأسبوع من Google وطلبات وكريم وإنستغرام، بالفصحى واللهجة والإنجليزي | كل مراجعة بتتصنّف (الصحن، المشكلة، الحدّة)، **والكود بيعدّ الأنماط** | إيميل الأحد 9:00 للمدير والشيف: **3 قرارات تشغيلية** + جدول الأنماط + **مسودة رد** لكل مراجعة سلبية |
+| Review | What the workflow does |
+|---|---|
+| «شاورما الدجاج كانت باردة» · Friday 18:40 | **→ Part of a pattern.** One of 5 cold-shawarma complaints on the same Friday evening. It becomes decision #1. |
+| «الشاورما وصلت باردة ع الطاولة» · Tuesday 13:20 | **→ Kept separate.** Same dish, same problem, different shift. It doesn't inflate Friday's count. |
+| «Shawarma was great tonight, hot and crispy» | **→ Not a complaint.** Mentioning a dish isn't a problem. No draft reply. |
+| «لقيت شعرة بالفتوش» | **→ Flagged, even alone.** Severity 5, hygiene. A single complaint like this still reaches the decisions. |
+| «التوصيل تأخر كتير، ساعة وعشر دقايق» · Saturday | **→ A weekend pattern.** 3 late deliveries across Friday and Saturday, grouped by weekend rather than by shift. |
+| A review from last week | **→ Ignored.** Only the last 7 days are read. |
+| The model returns something broken | **→ Marked ⚠️ in the sheet.** The other reviews carry on, and the report still goes out. |
 
-| | بدون النظام | مع النظام |
-|---|---|---|
-| مين بيقرأ؟ | المدير، مراجعة مراجعة | النظام، كل أحد الصبح |
-| شو بيشوف؟ | 16 زبون زعلان | **نمط واحد واضح:** شاورما · الجمعة مسائي · 5 شكاوى برودة |
-| شو بيصير بعدها؟ | رد "نعتذر عن الإزعاج" | **أمر شغل للمطبخ:** مين، شو، وإيمتى |
-| الردود على الزباين | من الصفر لكل وحدة | مسودة جاهزة بلغة الزبون، بتنراجع وبتنشر |
-
----
-
-<a id="demo"></a>
-## 🎯 النتيجة
-
-### النمط اللي ما بتشوفه العين
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/heatmap-dark.svg">
-  <img src="assets/heatmap-light.svg" alt="خريطة الشكاوى حسب اليوم والشفت: 7 شكاوى ليلة الجمعة، 5 منها شاورما باردة" width="100%">
-</picture>
-
-40 مراجعة موزّعة على 7 أيام. وحدة وحدة، كل شكوى بتبيّن حادثة منفردة. بس لما تنعدّ حسب **اليوم × الشفت × الصحن**، بيطلع مربّع واحد فيه 7 شكاوى، منها 5 عن نفس الإشي.
-<sub>الخريطة مولّدة من <code>data/</code> عبر <code>node dev/make-visuals.mjs</code>.</sub>
-
-### شو بيوصل على الجوال
+## The Sunday email
 
 <table>
 <tr>
-<td width="44%" valign="top"><img src="assets/email-phone.png" alt="الإيميل الأسبوعي على الجوال" width="100%"></td>
+<td width="42%" valign="top"><img src="assets/email-phone.png" alt="The weekly email on a phone" width="100%"></td>
 <td valign="top">
 
-**1. سطر واحد بالأعلى**
-أهم نمط بالأسبوع، وجنبه اقتراح.
+**One line at the top.** The strongest pattern of the week and what to do about it.
 
-**2. أرقام الأسبوع**
-عدد المراجعات، وقدّيش منها فيها مشكلة، ومعدّل التقييم.
+**The week in four numbers.** Reviews, how many had a problem, how many were positive, average rating.
 
-**3. ثلاث قرارات**
-كل قرار إله **مسؤول** (الشيف، مدير الصالة، التوصيل) و**أولوية** و**دليل بالأرقام** و**إجراء بينفحص بالشفت الجاي**.
+**Three decisions.** Each one has an owner (chef, floor manager, delivery), a priority, the numbers behind it, and an action someone can check on the next shift.
 
-**4. جدول الأنماط**
-صحن × شفت، وتحته مشاكل الويكند مقابل أيام الدوام.
+**The patterns.** Dish × shift, then weekend against weekdays.
 
-**5. مسودات الردود**
-لكل مراجعة سلبية، بلغة الزبون، مرتّبة حسب الحدّة. ما بتوعد بتعويض، وما بتلوم الزبون.
+**Draft replies.** One per unhappy review, in the customer's language, worst first. They never promise a refund and never blame the customer. Someone still reads them before posting.
 
-<sub>⚠️ اللقطة من الاختبار المحلي: الأرقام والجداول حقيقية من الكود، أما نصوص القرارات والردود فوهمية لأنو OpenAI مش مربوط بالاختبار.</sub>
+<sub>From the offline test. The numbers and tables are real output of the workflow's code. The decision and reply wording is a stand-in, because OpenAI isn't called in that test.</sub>
 
 </td>
 </tr>
 </table>
 
----
+## Why counting matters
 
-<a id="how"></a>
-## ⚙️ كيف بيشتغل
+<img src="assets/heatmap.svg" alt="Reviews with a problem by day and shift: Friday evening has 7, five of them cold shawarma. No other cell has more than 2." width="100%">
+
+Read one by one, every complaint looks like bad luck. Counted by day and shift, one square stands out. That's the whole product, and it's why the counting is done by code, not by the model.
+
+## The workflow
 
 <!-- WORKFLOW_SCREENSHOT -->
 
 ```mermaid
 flowchart LR
-  T1([⏰ أحد 9:00]) --> C[Config]
-  T2([▶️ تشغيل يدوي]) --> C
-  C --> R[(📄 Google Sheet<br/>المراجعات)]
-  R --> P[فلتر الأسبوع<br/>+ حساب الشفت]
-  P --> AI1{{🤖 تصنيف كل مراجعة<br/>json_schema strict}}
-  AI1 --> V[تحقق وتصحيح]
-  V --> W[(📄 كتابة التصنيف<br/>جنب كل مراجعة)]
-  W --> G[🧮 عدّ الأنماط<br/>3 تجميعات]
-  G --> AI2{{🤖 3 قرارات<br/>من الأرقام بس}}
-  AI2 --> E[بناء HTML<br/>RTL · 600px]
-  E --> M([📧 Gmail])
-
-  classDef ai fill:#fff1e8,stroke:#e76624,stroke-width:2px,color:#191919
-  classDef code fill:#e8f1fd,stroke:#257de0,stroke-width:2px,color:#191919
-  classDef io fill:#f2f4f7,stroke:#8b949e,color:#191919
-  class AI1,AI2 ai
-  class P,V,G,E,C code
-  class T1,T2,R,W,M io
+    T["Every Sunday 9:00"] --> R["Google Sheets<br/>this week's reviews"]
+    R --> F["Filter the week<br/>+ work out the shift"]
+    F --> C(("OpenAI<br/>tag each review"))
+    C --> V["Validate"]
+    V --> W["Write tags<br/>back to the sheet"]
+    W --> G["Count patterns<br/>3 groupings"]
+    G --> D(("OpenAI<br/>3 decisions"))
+    D --> E["Mobile email<br/>Arabic, right to left"]
+    E --> M["Gmail"]
 ```
 
-<p align="center"><sub>🟧 ذكاء اصطناعي (فهم لغة) · 🟦 كود (حساب وقواعد) · ⬜ مدخلات ومخرجات</sub></p>
+## The problem
 
-| # | الخطوة | مين بيعملها | ليش هيك |
-|---|---|---|---|
-| 1 | قراءة مراجعات آخر 7 أيام | Google Sheets | العميل أصلاً بيجمّعها بشيت |
-| 2 | الشفت من وقت الزيارة | **كود** | يوم الأسبوع ما بيتخمّن |
-| 3 | الصحن، نوع المشكلة، الحدّة، ملخّص، مسودة رد | **OpenAI** (mini) | فهم لهجة: "الساندويش بارد" = شاورما |
-| 4 | التحقق من كل رد | **كود** | رد خربان بيتعلّم ⚠️، وما بيوقّف التقرير |
-| 5 | العدّ والترتيب | **كود** | الأرقام لازم تكون صح 100% |
-| 6 | 3 قرارات | **OpenAI**، من الأرقام بس | صياغة، مش حساب |
-| 7 | إيميل HTML | **كود** + Gmail | مقروء على الجوال، عربي من اليمين |
+Restaurant owners read bad reviews one at a time and answer them one at a time. Nobody notices that six of them are about the same dish on the same shift, so the complaint never reaches the kitchen. Review tools stop at "reply to the customer". The fix usually needs to happen at the grill.
 
----
+## How it was built
 
-## 🧠 خمس قرارات هندسية
+**Stack:** n8n · OpenAI gpt-4.1-mini (Structured Outputs) · Google Sheets · Gmail
 
-<details>
-<summary><b>1. الموديل بيصنّف، والكود بيعدّ</b>: مستحيل يقول "7 شكاوى" إذا الحقيقة 5</summary>
+<details open>
+<summary><b>Design decisions</b></summary>
 
-<br>
+- **The model tags, the code counts.** The decisions model never sees a review. It gets the counts from code and has to cite them. It can't say "7 complaints" when there were 5.
+- **Closed lists, not free text.** The dish comes from the menu, and the problem from a fixed list. Otherwise "شاورما", "ساندويش شاورما دجاج" and "شاورما العربي" are three dishes and nothing adds up.
+- **The shift comes from the data.** It's worked out from the visit time, not guessed from the text. Reviews almost never say "Friday night".
+- **A written severity scale.** From 0 (no problem) to 5 (health and safety). One hair in the food outranks three salty plates.
+- **One bad answer doesn't stop the report.** It's marked ⚠️ in the sheet, and the email says how many need a look.
+- **Safe by default.** No API key inside any node. Review text is written to the sheet as plain text, so a review starting with `=` never becomes a formula, and it's escaped before it goes into the email.
 
-موديل القرارات ما بيشوف ولا مراجعة. بيوصله ملخّص أرقام جاهز:
-
-```js
-// dev/code-nodes/05-aggregate-patterns.js
-const byDishShiftIssue = groupBy(issues, ['dish', 'shift', 'issue_type']);
-const byIssueWeekPart  = groupBy(issues, ['issue_type', 'week_part']);   // تأخير التوصيل = نمط ويكند
-const byDishIssue      = groupBy(issues, ['dish', 'issue_type']);
-// ...sorted by count, then by total severity
-```
-
-والـ prompt بيفرض: *"cite ONLY numbers present in the input… a likely cause must be phrased as a hypothesis"*.
 </details>
 
 <details>
-<summary><b>2. قوائم مغلقة بدل نص حر</b>: "شاورما" و"ساندويش شاورما دجاج" نفس الصحن</summary>
+<summary><b>How I tested it, before connecting any account</b></summary>
 
 <br>
 
-```js
-// dev/code-nodes/02-prepare-week.js — OpenAI Structured Outputs, strict
-dish:       { type: 'string',  enum: [...cfg.menu, 'عام', 'غير محدد'] },
-issue_type: { type: 'string',  enum: ['cold_food', 'taste_quality', 'delivery_delay', 'hygiene', /* … */ 'none'] },
-severity:   { type: 'integer', enum: [0, 1, 2, 3, 4, 5] },
-```
+The demo data has traps with known answers, and [`data/expected-labels.csv`](data/expected-labels.csv) holds the right label for every review. The test runs the workflow's own Code nodes, read straight from `workflow.json`, with OpenAI mocked.
 
-لو الصحن نص حر، الشكاوى الخمسة كانت رح تتوزّع على 3 أسماء، وما كان في نمط ينعدّ.
-</details>
-
-<details>
-<summary><b>3. الشفت من البيانات، مش من التخمين</b></summary>
-
-<br>
-
-```js
-const part = visit.getUTCHours() < cfg.evening_starts_at_hour ? 'غداء' : 'مسائي';
-row.shift = `${DAYS_AR[dow]} · ${part}`;           // "الجمعة · مسائي"
-```
-
-البيانات فيها **فخ مقصود**: شكوى شاورما باردة يوم الثلاثاء غدا (R007). النظام ما بيضمّها لنمط الجمعة، لأنو الشفت مختلف.
-</details>
-
-<details>
-<summary><b>4. مقياس حدّة مكتوب</b>: شعرة بالأكل أهم من 3 شكاوى ملح</summary>
-
-<br>
-
-| 0 | 1 | 2 | 3 | 4 | 5 |
-|---|---|---|---|---|---|
-| ما في مشكلة | ملاحظة بمراجعة إيجابية | مشكلة واضحة | خرّبت جزء من الوجبة | خرّبت الزيارة | صحة وسلامة |
-
-الشكاوى بحدّة 4 فما فوق بتوصل لموديل القرارات حتى لو كانت **منفردة**.
-</details>
-
-<details>
-<summary><b>5. آمن بالتصميم</b></summary>
-
-<br>
-
-- **ولا مفتاح API** بأي node: كله عبر n8n credentials
-- الكتابة بالشيت بوضع **RAW**: مراجعة بتبلّش بـ `=` ما بتصير معادلة
-- كل نص من الزباين بيتعقّم (escape) قبل ما يدخل الـ HTML
-- workflow تنبيه أخطاء مشترك (`shared/error-alert.workflow.json`)
-</details>
-
----
-
-<a id="proof"></a>
-## ✅ الإثبات: 10 فحوصات بدون ولا مفتاح
-
-البيانات التجريبية فيها أنماط مزروعة **معروف عددها**، والإجابات الصحيحة بـ [`data/expected-labels.csv`](data/expected-labels.csv). الاختبار بيشغّل كود الـ workflow نفسه (مقروء من `workflow.json`) مع OpenAI وهمي:
-
-```bash
-node dev/run-local.mjs
-```
+| Planted in the data | Why |
+|---|---|
+| 5 cold-shawarma complaints, Friday evening | The pattern that has to come first |
+| 3 late deliveries, Friday and Saturday | A weekend pattern, not a shift |
+| Cold shawarma, Tuesday lunch | Must not join Friday's count |
+| 3 reviews praising the shawarma | Naming a dish isn't a complaint |
+| 2 reviews from the week before | The date filter |
+| A hair in the fattoush | One complaint, highest severity |
 
 ```text
+$ node dev/run-local.mjs
 ✅ date filter: 40 reviews this week, R041/R042 (last week) excluded
-✅ shift computed from visit time (R021 → الجمعة · مسائي, R007 → الثلاثاء · غداء)
-✅ top pattern = شاورما · الجمعة مسائي · cold_food × 5 (got شاورما · الجمعة · مسائي · cold_food × 5)
+✅ shift computed from visit time (R021 → Friday evening, R007 → Tuesday lunch)
+✅ top pattern = shawarma · Friday evening · cold_food × 5
 ✅ decoy cold shawarma on Tuesday lunch is NOT merged into the Friday pattern
 ✅ delivery delays on the weekend grouped (×3)
 ✅ positive reviews never counted as issues (incl. positive shawarma R008/R036/R040)
@@ -215,115 +114,53 @@ node dev/run-local.mjs
 ✅ decisions model receives only aggregates (no review text)
 ✅ email: RTL, ≤600px, all user text escaped
 ✅ sheet write-back has exactly the label columns
-
-stats: {"total":40,"issues":22,"negative":16,"positive":18,"avg_rating":3.6,"needs_review":1,"tokens":16380}
-subject: 📋 مراجعات الأسبوع · بيت الصاج · 2026-11-15 ← 2026-11-21
 ```
 
-| المزروع بالبيانات | ليش موجود |
-|---|---|
-| 5 شكاوى شاورما باردة · الجمعة مسائي | النمط اللي لازم يطلع أول |
-| 3 تأخير توصيل موزّعين على الجمعة والسبت | نمط **ويكند**، مش شفت |
-| شاورما باردة · الثلاثاء غدا | فخ: ما لازم تنضم للجمعة |
-| 3 مراجعات **بتمدح** الشاورما | فخ: ذكر الصحن ≠ شكوى |
-| مراجعتين من الأسبوع الماضي | فخ: فلتر التاريخ |
-| شعرة بالفتوش | شكوى وحدة بحدّة 5 |
+This checks the plumbing. How well the model itself tags the reviews gets measured on the first real run, against the same file.
 
-> الاختبار المحلي بيفحص **التمديدات** (الفلترة، العدّ، الإيميل). دقة الموديل الحقيقية بتنقاس بأول تشغيل مقابل `expected-labels.csv`.
-
----
-
-<a id="run"></a>
-## 🚀 شغّله
-
-| المفتاح | لأي node |
-|---|---|
-| **OpenAI API** | تصنيف + قرارات |
-| **Google Sheets OAuth2** | قراءة + كتابة |
-| **Gmail OAuth2** | الإيميل + تنبيه الأخطاء |
-
-1. **Import from File** ← [`shared/error-alert.workflow.json`](shared/error-alert.workflow.json)، وبعدين [`workflow.json`](workflow.json)
-2. node **Config** ← `sheet_id` و `report_to`
-3. اربط الـ credentials الثلاثة
-4. Settings ← Error workflow ← `D0 · error-alert`
-5. **Execute workflow** ← الإيميل بيوصل خلال دقيقة تقريباً
-
-📖 التفاصيل الكاملة (Google OAuth، الشيت، الإنتاج، التكلفة) بـ [`docs/SETUP.md`](docs/SETUP.md) · وشو لازم ينفحص بعد أول تشغيل بـ [`docs/review-checklist.md`](docs/review-checklist.md)
-
-**التكلفة (تقديري):** أقل من 3 سنت لـ 40 مراجعة بـ `gpt-4.1-mini`.
-
----
-
-## 🚧 حدود النسخة الحالية
-
-- **بيحتاج وقت الزيارة** عشان يحسب الشفت. مراجعات Google لحالها ما فيها هالمعلومة، بس تطبيقات التوصيل وأنظمة الكاشير فيها.
-- **ما بينشر الردود لحاله.** المسودة بتضل بإيد المدير، وهاد مقصود.
-- **إذا ما في مراجعات بالأسبوع**، ما بيوصل إيميل (التشغيل بيوقف بهدوء).
-- **المنيو لازم ينكتب مرة وحدة** بـ Config. صحن جديد مش بالقائمة بيطلع "غير محدد".
-
----
-
-<a id="docs-experiment"></a>
-## 📝 تجربة التوثيق: README أول
-
-هاد المشروع هو **اليوم 1 من تحدي "7 أيام · 7 مشاريع"**، وكل يوم بنجرّب طريقة توثيق مختلفة. طريقة اليوم: **التوثيق بينكتب قبل البناء**، وبعد البناء بنقارن.
-
-النسخة الأصلية انحفظت لحالها بـ [أول commit](https://github.com/Sfditala/review-to-kitchen-report/commit/11d33a2) قبل أي سطر كود، وموجودة حرفياً تحت.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/plan-vs-reality-dark.svg">
-  <img src="assets/plan-vs-reality-light.svg" alt="الخطة قبل البناء مقابل اللي انبنى" width="100%">
-</picture>
-
-### النتيجة بسطرين
-**الهيكل صمد، والتفاصيل لأ.** ولا خطوة من الخطة انحذفت، بس 5 nodes تغيّروا عن الخطة و6 انضافوا.
-وأهم سؤال فات الكتابة المسبقة: **"الشفت من وين بيجي؟"** والجواب غيّر شكل البيانات نفسها.
-
-<details>
-<summary><b>كل التغييرات الـ 11 عن الخطة، وليش</b></summary>
-
-<br>
-
-| # | بالخطة | اللي انبنى فعلاً | ليش |
-|---|---|---|---|
-| 1 | الموديل بيستخرج `shift` من النص | **الشفت بينحسب بالكود** من عمود جديد `visit_datetime` (اليوم + قبل/بعد الساعة 4) | المراجعة نادراً بتحكي "الجمعة المسا". لو الموديل خمّن، النمط المزروع ما رح ينكشف. والكود ما بيغلط بيوم الأسبوع |
-| 2 | `dish` نص حر | **قائمة مغلقة** (المنيو بـ Config) + `عام` + `غير محدد` | "شاورما"، "ساندويش شاورما دجاج"، "شاورما العربي" كانوا رح يتوزّعوا على 3 مجموعات، والعدّ يتكسّر |
-| 3 | node الـ OpenAI | **HTTP Request** لـ Chat Completions مع `json_schema strict` (بنفس credential الـ OpenAI) | Structured Output حقيقي: الموديل ما بيقدر يطلّع قيمة برّا القائمة. وما بيتأثر بتغيّر إصدارات node الـ OpenAI |
-| 4 | تجميع وحيد `dish × shift × issue` | **3 تجميعات:** صحن×شفت×مشكلة · مشكلة×(ويكند/دوام) · صحن×مشكلة | تأخير التوصيل نمط **ويكند** مش شفت معيّن (جمعة مسا، سبت غدا، سبت مسا). بالتجميع الوحيد كان رح يطلع 3 شكاوى منفردة |
-| 5 | (مش مذكور) | **مقياس حدّة 0–5 مكتوب** + الشكاوى الحرجة المنفردة (حدّة ≥ 4) بتوصل لموديل القرارات | شعرة بالأكل شكوى وحدة بس أخطر من 3 شكاوى ملح. العدّ لحاله بيدفنها |
-| 6 | (مش مذكور) | موديل القرارات بياخد **أرقام جاهزة بس**، ولا نص مراجعة | العدّ بالكود. الموديل بيكتب القرار وما بيعدّ. ومستحيل يخترع "7 شكاوى" إذا الكود قال 5 |
-| 7 | "قراءة مراجعات الأسبوع" | node **Prepare week**: فلتر 7 أيام + `reference_date` للديمو + قراءة التاريخ كرقم أو نص | Google Sheets أحياناً بيحوّل التاريخ لرقم تسلسلي. وبدون `reference_date` الديمو ما بيشتغل إلا بأسبوع 15–21 نوفمبر |
-| 8 | (مش مذكور) | **Parse classification**: إذا رد الموديل خربان ← المراجعة بتتعلّم ⚠️ والتشغيل بيكمّل | مراجعة وحدة خربانة ما لازم توقّف تقرير 40 مراجعة |
-| 9 | (مش مذكور) | الكتابة بالشيت بوضع **RAW** | مراجعة بتبلّش بـ `=` ما بتتنفّذ كمعادلة |
-| 10 | (مش مذكور) | **Config** node + **Manual Trigger** + workflow تنبيه أخطاء مشترك | كل الإعدادات بمكان واحد، والتجربة بدون ما نستنّى الأحد |
-| 11 | تاب اسمه `reviews` | الشيت بينقرأ **بالـ ID** (`gid=0`) مش بالاسم | Google سمّى التاب تلقائياً وقت تحويل الـ CSV. القراءة بالـ ID ما بتنكسر لو حدا غيّر الاسم |
 </details>
 
-### القياس
-
-| السؤال | الجواب |
-|---|---|
-| كم من الخطة ضل زي ما هو؟ | خطوات التدفق 7/7 · حقول التصنيف 5/6 (الشفت طلع للكود) · معايير النجاح 5/5 **+ 2 جداد** |
-| هل الكتابة المسبقة سرّعت البناء؟ | **آه:** كل معيار نجاح صار فحص بـ `run-local.mjs`، فكان "خلصنا" معرّف من أول دقيقة |
-| وين قصّرت؟ | وصفت **شو** بدنا، بس ما سألت **من وين بتيجي كل معلومة** |
-
-### اقتراح للقالب: "مصدر كل حقل"
-لو هالجدول كان بالـ README المسبق، التغييرين 1 و 2 كانوا انكشفوا قبل البناء:
-
-| الحقل | من وين؟ | ليش؟ |
-|---|---|---|
-| `review_text`، `rating`، `source` | **المدخل** (الشيت) | بيانات خام |
-| `visit_datetime` | **المدخل** (تطبيق التوصيل / الكاشير) | بدونه ما في شفت |
-| `shift`، `week_part` | **الكود** | حساب ثابت من الوقت |
-| `dish`، `issue_type`، `severity` | **الموديل**، من قوائم مغلقة | فهم لغة، بقيم بتنعدّ |
-| `summary`، `reply_draft` | **الموديل**، نص حر | كتابة |
-| العدّ، الترتيب، الإحصائيات | **الكود** | الأرقام لازم تكون صح 100% |
-| القرارات الثلاثة | **الموديل**، من أرقام الكود بس | صياغة، مش حساب |
-
 <details>
-<summary><b>📜 النسخة الأصلية: انكتبت قبل البناء، بدون أي تعديل</b></summary>
+<summary><b>What the plan missed, and the fix</b></summary>
 
 <br>
+
+| What the plan said | What the build needed |
+|---|---|
+| The model reads the shift from the review | Reviews don't say it. The shift is worked out in code from a new `visit_datetime` column. |
+| The dish as free text | A closed menu list, or the same dish splits into three names. |
+| One grouping: dish × shift × problem | Three. Late deliveries are a weekend pattern spread over shifts, and one grouping hid them. |
+| Nothing on severity | A written 0–5 scale, and single complaints of 4+ always reach the decisions. |
+| The OpenAI node | An HTTP request with `json_schema` in strict mode, so the model can't return a value outside the lists. |
+| "Read this week's reviews" | A filter with a demo date, and date parsing for both text and Sheets' serial numbers. |
+| Nothing on bad answers | Validation that flags the review and lets the run continue. |
+| A sheet tab named `reviews` | Google names the tab itself when it converts a CSV. The tab is read by its ID instead. |
+
+</details>
+
+## Documenting it README-first
+
+Each day of the challenge I try a different way of documenting. For this one I wrote the README **before** building anything, committed it on its own ([first commit](https://github.com/Sfditala/review-to-kitchen-report/commit/11d33a2)), and compared it with what I built.
+
+<img src="assets/plan-vs-reality.svg" alt="The plan had 7 steps; the build has 13 nodes: 2 as planned, 5 changed, 6 added. No planned step was dropped." width="100%">
+
+**The structure held, the details didn't.** No planned step was dropped, but 5 changed and 6 were added. The success criteria I wrote up front turned straight into the test checks, so I knew what "done" meant from the first minute. What the README missed was one question: **where does each field come from?** The shift couldn't come from the review text, and that changed the data itself.
+
+So next time the template gets one more section:
+
+| Field | Comes from | Why |
+|---|---|---|
+| `review_text`, `rating`, `visit_datetime` | **Input**: the sheet, a delivery app, the till | Raw data. Without the visit time there's no shift |
+| `shift`, all counts and totals | **Code** | Fixed rules, and numbers have to be exact |
+| `dish`, `issue_type`, `severity` | **Model**, from closed lists | Reading dialect, but with values that can be counted |
+| `summary`, `reply_draft`, the 3 decisions | **Model**, free text | Writing, from the code's numbers |
+
+<details>
+<summary><b>The original README, written before the build (Arabic, unedited)</b></summary>
+
+<br>
+
+<div dir="rtl">
 
 ### review-to-kitchen-report
 
@@ -390,38 +227,42 @@ Schedule (أحد 9:00)
 #### بعد البناء: شو تغيّر عن الخطة؟ وليش؟
 
 *(بينكتب بعد البناء. ممنوع تعديل أي إشي فوق الخط.)*
+
+</div>
+
 </details>
 
-### بعد التشغيل الحقيقي
-- [ ] الوقت الفعلي للبناء والتشغيل: `[⚠️ بحاجة لرقم]`
-- [ ] دقة التصنيف الحقيقية: `[⚠️ __ / 40 طابقت expected-labels.csv]`
-- [ ] نص أول قرار كما وصل بالإيميل: `[⚠️]`
-- [ ] تقييم طريقة التوثيق: [`score.md`](score.md) `[⚠️ __ / 25]`
+## What it doesn't do
+
+- **It needs the visit time** to know the shift. Google reviews alone don't have it. Delivery apps and point-of-sale systems do.
+- **It doesn't post replies.** The drafts stay with the manager, on purpose.
+- **A quiet week sends nothing.** If there are no reviews in the last 7 days, the run stops without an email.
+- **The menu is set once** in the Config node. A new dish that isn't on the list comes out as "غير محدد" (unidentified).
+
+## Run it yourself
+
+1. In n8n, go to **Workflows → Import from File** and choose [`shared/error-alert.workflow.json`](shared/error-alert.workflow.json), then [`workflow.json`](workflow.json).
+2. Import [`data/reviews.csv`](data/reviews.csv) into a new Google Sheet.
+3. In the **Config** node, replace `YOUR_GOOGLE_SHEET_ID` and `YOUR_EMAIL@example.com`.
+4. Connect OpenAI, Google Sheets and Gmail credentials, and set `D0 · error-alert` as the error workflow in Settings.
+5. Run **Execute workflow**. The email arrives in about a minute. For production, clear `reference_date` and publish.
+
+Full setup in Arabic, including Google OAuth and costs: [`docs/SETUP.md`](docs/SETUP.md). What to check after the first run: [`docs/review-checklist.md`](docs/review-checklist.md).
+
+This export contains no credentials or webhook IDs. Personal IDs are replaced with placeholders, and [a check](scripts/check-clean.mjs) runs on every push, together with the offline tests.
+
+## العربية
+
+<div dir="rtl">
+
+كل أحد الساعة 9، النظام بيقرأ مراجعات المطعم من الأسبوع، بيصنّف كل وحدة حسب الصحن والشفت ونوع المشكلة، وبيعدّ شو اللي بيتكرر. بعدين بيوصل للمدير والشيف إيميل فيه 3 قرارات تشغيلية، ومسودة رد لكل زبون زعلان.
+
+الفكرة إنو الشكوى ما توقف عند "نعتذر عن الإزعاج". إذا 5 زباين حكوا إنو الشاورما كانت باردة ليلة الجمعة، هاد شغل للمطبخ.
+
+المشروع تجريبي على مطعم خيالي وببيانات تجريبية، وهو اليوم الأول من تحدي "7 أيام · 7 مشاريع".
+
+</div>
 
 ---
 
-## 📂 هيكل الريبو
-
-```text
-.
-├── workflow.json                  ← Import بـ n8n
-├── shared/error-alert.workflow.json
-├── data/
-│   ├── reviews.csv                ← 42 مراجعة تجريبية (مطعم وهمي: بيت الصاج)
-│   └── expected-labels.csv        ← الإجابات الصحيحة
-├── dev/
-│   ├── code-nodes/*.js            ← كود الـ Code nodes كملفات قابلة للمراجعة
-│   ├── build.mjs                  ← بيبني workflow.json منهم
-│   ├── run-local.mjs              ← 10 فحوصات بدون مفاتيح
-│   └── make-visuals.mjs           ← بيولّد صور هالـ README من البيانات
-├── assets/                        ← الصور (فاتح + غامق)
-├── docs/SETUP.md · docs/review-checklist.md
-└── post.md · score.md             ← مسودة لينكدإن + تقييم التوثيق
-```
-
----
-
-<p align="center">
-  <b>اليوم 1 من 7</b> · تحدي <b>7 أيام · 7 مشاريع</b>: 7 مجالات، 7 أتمتات حقيقية، 7 طرق توثيق<br>
-  <sub>بدك متله لمطعمك أو الكافيه أو محل الحلويات؟ تواصل عبر <a href="https://github.com/Sfditala">GitHub</a></sub>
-</p>
+<p align="center">Built by <a href="https://portfolio-mauve-seven-44.vercel.app/"><b>Tala Safadi</b></a>, AI Engineer · <a href="https://www.linkedin.com/in/talasfdi">LinkedIn</a><br>More systems: <a href="https://github.com/Sfditala/uni-email-to-tasks">Uni Email to Tasks</a> · <a href="https://github.com/Sfditala/clinic-ai-receptionist">Clinic AI Receptionist</a> · <a href="https://github.com/Sfditala/ai-marketing-team">AI Marketing Team</a></p>

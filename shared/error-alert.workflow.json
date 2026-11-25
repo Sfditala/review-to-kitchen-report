@@ -2,7 +2,7 @@
   "name": "D0 · error-alert",
   "nodes": [
     {
-      "id": "aade468c-f7e5-40a6-968a-f9280455d5ec",
+      "id": "96d15de8-4975-4499-b7b3-84a0b1a92802",
       "name": "On workflow error",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
@@ -13,7 +13,7 @@
       "parameters": {}
     },
     {
-      "id": "239e9752-11c8-46a3-adb6-9499969148e3",
+      "id": "c72b32e7-ebb0-4aeb-8d06-75b5d49cfd8b",
       "name": "Email the error",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -21,7 +21,6 @@
         260,
         0
       ],
-      "webhookId": "dd04880a-9d0d-40c0-bc5e-f52504e65f97",
       "parameters": {
         "sendTo": "YOUR_EMAIL@example.com",
         "subject": "=❌ {{ $json.workflow.name }} فشل",

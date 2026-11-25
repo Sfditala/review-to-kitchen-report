@@ -4,8 +4,8 @@
 return [{
   json: {
     // Google Sheet ID: the long string in the URL between /d/ and /edit
-    // Demo sheet already created: "D1 · reviews · review-to-kitchen-report"
-    sheet_id: '1JyvYcGDssD6m7Fe5A9oXMXmVIAdsyUePnDZUQ2IEoe8',
+    // Google Sheet ID: the long string in the sheet's URL between /d/ and /edit
+    sheet_id: 'YOUR_GOOGLE_SHEET_ID',
     // Tab by ID (gid in the URL: ...#gid=0). 0 = first tab, survives renaming.
     sheet_gid: '0',
 

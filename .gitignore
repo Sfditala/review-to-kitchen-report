@@ -1,4 +1,6 @@
 dev/out/
+dev/local.json
+workflow.local.json
 node_modules/
 .env
 .DS_Store

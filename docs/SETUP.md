@@ -2,37 +2,39 @@
 
 ## 1. المفاتيح
 
-| # | Credential بـ n8n | الحالة | بتنستخدم بـ |
-|---|---|---|---|
-| 1 | **Google Sheets OAuth2** (`Google Sheets account`) | ✅ موجود، ومربوط تلقائياً بالملف | Read reviews · Write labels to sheet |
-| 2 | **OpenAI API** | ❌ لازم ينعمل | Classify review · Write 3 decisions |
-| 3 | **Gmail OAuth2** | ❌ لازم ينعمل | Send report · Email the error |
+| Credential بـ n8n | بتنستخدم بـ |
+|---|---|
+| **OpenAI API** | Classify review · Write 3 decisions |
+| **Google Sheets OAuth2** | Read reviews · Write labels to sheet |
+| **Gmail OAuth2** | Send report · Email the error |
 
-**OpenAI:** platform.openai.com ← API keys ← Create. وتأكدي إنو في رصيد بالحساب (Billing)، لأنو المفتاح بدون رصيد بيرجّع 429.
-بـ n8n: Credentials ← Add ← **OpenAI** ← الصقي المفتاح. (الـ HTTP nodes مضبوطة على *Predefined Credential Type ← OpenAI API*، فبس اختاري الـ credential.)
+**OpenAI:** platform.openai.com ← API keys ← Create، وتأكد إنو في رصيد بالحساب (المفتاح بدون رصيد بيرجّع 429).
+بـ n8n: Credentials ← Add ← **OpenAI**. الـ HTTP nodes مضبوطة على *Predefined Credential Type ← OpenAI API*، فبس اختار الـ credential.
 
-**Gmail:** على n8n Cloud: Credentials ← Add ← **Gmail OAuth2** ← Sign in with Google.
-على سيرفر خاص بدك OAuth client من Google Cloud (Gmail API + Sheets API + Drive API مفعّلين، والـ redirect URL بتنسخيه من نافذة الـ credential). وإذا ضلّت شاشة الموافقة على **Testing**، الربط بينتهي بعد 7 أيام، فحوّليها لـ **In production**.
+**Google (Sheets + Gmail):** على n8n Cloud بكبسة *Sign in with Google*.
+على سيرفر خاص بدك OAuth client من Google Cloud: فعّل Sheets API و Gmail API و Drive API، وانسخ الـ redirect URL من نافذة الـ credential.
+إذا شاشة الموافقة ضلّت على **Testing**، الربط بينتهي بعد 7 أيام وإيميل الأحد الجاي بيفشل، فحوّلها لـ **In production**.
 
 ---
 
-## 2. الشيت (جاهز)
+## 2. الشيت
 
-[D1 · reviews · review-to-kitchen-report](https://docs.google.com/spreadsheets/d/1JyvYcGDssD6m7Fe5A9oXMXmVIAdsyUePnDZUQ2IEoe8/edit): 42 مراجعة، والـ ID محطوط بـ **Config**.
+1. Google Sheets ← شيت جديد ← **File ← Import ← Upload** ← `data/reviews.csv` ← **Replace current sheet**
+2. انسخ الـ ID من الرابط (بين `/d/` و `/edit`) وحطه بـ `sheet_id` بـ **Config**
 
-> ⚠️ الشيت انعمل بحساب Google الجامعي. إذا credential الـ **Google Sheets** بـ n8n مربوط بحساب تاني، اعمليله **Share ← Editor** لهداك الحساب، وإلا القراءة بتفشل بـ "not found".
+الـ workflow بيقرأ أول تاب بالـ ID (`gid=0`)، فاسم التاب ما بيفرق. والأعمدة الفاضية (`dish` … `classified_at`) لازم تضل موجودة.
+
+> لازم يكون حساب Google المربوط بـ credential الـ Sheets بيقدر يفتح الشيت (مالك أو Editor).
 
 ---
 
 ## 3. الاستيراد بـ n8n
 
-1. **Workflows ← Create folder** ← `7 Days 7 Projects`
-2. جوّا المجلد: **⋯ ← Import from File** ← `shared/error-alert.workflow.json`
-   - node **Email the error** ← حطي إيميلك مكان `YOUR_EMAIL@example.com` ← Gmail credential ← Save
-3. **Import from File** ← `workflow.json`
-4. **Config** ← `report_to` ← إيميلك (وبس، الباقي جاهز)
-5. اختاري الـ credential بالـ 3 nodes اللي عليهم ⚠️ (2 OpenAI + 1 Gmail)
-6. **Settings** (⋯ فوق) ← **Error workflow** ← `D0 · error-alert` ← Save
+1. **Import from File** ← `shared/error-alert.workflow.json` ← node **Email the error** ← إيميلك + Gmail credential ← Save
+2. **Import from File** ← `workflow.json`
+3. **Config** ← `sheet_id` و `report_to`
+4. اختار الـ credential بالـ 5 nodes اللي عليهم ⚠️
+5. **Settings** ← **Error workflow** ← `D0 · error-alert` ← Save
 
 ## 4. أول تشغيل
 

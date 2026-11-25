@@ -2,7 +2,7 @@
   "name": "D1 · review-to-kitchen-report",
   "nodes": [
     {
-      "id": "297de1a4-71db-453b-891d-2502de305e8e",
+      "id": "f7e2a3c2-1a80-4ac1-9371-70a9569f127b",
       "name": "Note · Setup",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -18,7 +18,7 @@
       }
     },
     {
-      "id": "21184f98-acc0-4894-9902-3c86783b1aca",
+      "id": "4d7014ea-bf63-4d0e-b464-6879bb24a266",
       "name": "Every Sunday 09:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -43,7 +43,7 @@
       }
     },
     {
-      "id": "3418db86-05e7-420e-9da0-951ec62cb315",
+      "id": "1de112f7-e0c2-4005-bc79-d7d20207b1ca",
       "name": "Run manually (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -54,7 +54,7 @@
       "parameters": {}
     },
     {
-      "id": "11ecf28a-6195-4fb1-83f2-3ebec5a31e00",
+      "id": "ece76620-e9e9-47bf-b83a-58d15788c203",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -63,11 +63,11 @@
         300
       ],
       "parameters": {
-        "jsCode": "// ============================================================\n//  ⚙️ CONFIG: the only node you need to edit\n// ============================================================\nreturn [{\n  json: {\n    // Google Sheet ID: the long string in the URL between /d/ and /edit\n    // Demo sheet already created: \"D1 · reviews · review-to-kitchen-report\"\n    sheet_id: '1JyvYcGDssD6m7Fe5A9oXMXmVIAdsyUePnDZUQ2IEoe8',\n    // Tab by ID (gid in the URL: ...#gid=0). 0 = first tab, survives renaming.\n    sheet_gid: '0',\n\n    // Who gets the weekly email (comma separated)\n    report_to: 'YOUR_EMAIL@example.com',\n\n    restaurant_name: 'بيت الصاج',\n    model: 'gpt-4.1-mini',\n\n    // Week window. reference_date = \"today\" for the filter.\n    //   DEMO: '2026-11-22' → reads the demo week 15–21 Nov 2026\n    //   PRODUCTION: '' → uses the real date when the Schedule fires\n    reference_date: '2026-11-22',\n    lookback_days: 7,\n\n    // Shift split: visits before this hour = lunch (غداء), after = evening (مسائي)\n    evening_starts_at_hour: 16,\n    // Jordan weekend = Friday (5) + Saturday (6)\n    weekend_days: [5, 6],\n\n    // Closed list of dishes → the model can't invent new dish names,\n    // so \"شاورما\" and \"ساندويش شاورما دجاج\" end up in the same bucket.\n    menu: ['شاورما', 'فلافل', 'حمص', 'فتة', 'منسف', 'مشاوي مشكلة', 'كبة', 'فتوش', 'بطاطا', 'خبز', 'كنافة', 'عصائر'],\n  },\n}];\n"
+        "jsCode": "// ============================================================\n//  ⚙️ CONFIG: the only node you need to edit\n// ============================================================\nreturn [{\n  json: {\n    // Google Sheet ID: the long string in the URL between /d/ and /edit\n    // Google Sheet ID: the long string in the sheet's URL between /d/ and /edit\n    sheet_id: 'YOUR_GOOGLE_SHEET_ID',\n    // Tab by ID (gid in the URL: ...#gid=0). 0 = first tab, survives renaming.\n    sheet_gid: '0',\n\n    // Who gets the weekly email (comma separated)\n    report_to: 'YOUR_EMAIL@example.com',\n\n    restaurant_name: 'بيت الصاج',\n    model: 'gpt-4.1-mini',\n\n    // Week window. reference_date = \"today\" for the filter.\n    //   DEMO: '2026-11-22' → reads the demo week 15–21 Nov 2026\n    //   PRODUCTION: '' → uses the real date when the Schedule fires\n    reference_date: '2026-11-22',\n    lookback_days: 7,\n\n    // Shift split: visits before this hour = lunch (غداء), after = evening (مسائي)\n    evening_starts_at_hour: 16,\n    // Jordan weekend = Friday (5) + Saturday (6)\n    weekend_days: [5, 6],\n\n    // Closed list of dishes → the model can't invent new dish names,\n    // so \"شاورما\" and \"ساندويش شاورما دجاج\" end up in the same bucket.\n    menu: ['شاورما', 'فلافل', 'حمص', 'فتة', 'منسف', 'مشاوي مشكلة', 'كبة', 'فتوش', 'بطاطا', 'خبز', 'كنافة', 'عصائر'],\n  },\n}];\n"
       }
     },
     {
-      "id": "758305fb-46d7-4da7-81c1-bf2b265bc707",
+      "id": "9c332407-df77-4208-a9f1-4ba520b4e95d",
       "name": "Read reviews",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -75,12 +75,6 @@
         340,
         300
       ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "WxSZcXk0rgmlIA9K",
-          "name": "Google Sheets account"
-        }
-      },
       "parameters": {
         "documentId": {
           "__rl": true,
@@ -103,7 +97,7 @@
       }
     },
     {
-      "id": "98514e56-bb90-4456-b44c-c36d1ac2b708",
+      "id": "243ee489-14b7-4aa5-a6cd-1a835b8b59b6",
       "name": "Prepare week",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -116,7 +110,7 @@
       }
     },
     {
-      "id": "08a4f4c1-76dd-491c-baea-41b12b9bc4dc",
+      "id": "d28a5fa3-75f0-4bc0-b2d0-4459bc37554b",
       "name": "Classify review (OpenAI)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -147,7 +141,7 @@
       }
     },
     {
-      "id": "ded3fb60-697c-458b-98d3-409c2e757b06",
+      "id": "1cb6a98d-07ad-40e0-89b5-578fce7c98ce",
       "name": "Parse classification",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -160,7 +154,7 @@
       }
     },
     {
-      "id": "3a9e6892-db30-4d01-84d1-40ba7d5a7ad0",
+      "id": "229c5758-a1c0-40f2-88f2-a3b11b3871e2",
       "name": "Sheet columns",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -173,7 +167,7 @@
       }
     },
     {
-      "id": "28d0e683-35a6-4e52-88d2-b62e27423c3c",
+      "id": "baca6b11-1a8e-4b65-87a0-15221be0ed53",
       "name": "Write labels to sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -181,12 +175,6 @@
         1640,
         300
       ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "WxSZcXk0rgmlIA9K",
-          "name": "Google Sheets account"
-        }
-      },
       "parameters": {
         "operation": "update",
         "documentId": {
@@ -287,7 +275,7 @@
       }
     },
     {
-      "id": "6a4ce63e-2d57-4c21-bc77-0dbd78087b4d",
+      "id": "82fbfcdf-cbdf-4626-b83f-d302fd7fbc3f",
       "name": "Aggregate patterns",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -300,7 +288,7 @@
       }
     },
     {
-      "id": "b3f525e5-e724-495c-82c2-57b7179c7f7c",
+      "id": "fe384af2-bc4a-4660-b292-ab96c2aa80c8",
       "name": "Write 3 decisions (OpenAI)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -325,7 +313,7 @@
       }
     },
     {
-      "id": "a456d03e-7713-47c2-8684-31097a563a76",
+      "id": "81e32acb-4cf7-44a0-b544-6798c0aedd53",
       "name": "Build email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -334,11 +322,11 @@
         300
       ],
       "parameters": {
-        "jsCode": "// Build a mobile-friendly RTL HTML email (inline styles only: Gmail strips <style>).\nconst cfg = $('Config').first().json;\nconst agg = $('Aggregate patterns').first().json;\nconst rows = $('Parse classification').all().map((i) => i.json);\nconst res = $input.first().json;\n\nlet plan;\ntry {\n  plan = JSON.parse(res.choices[0].message.content);\n} catch (e) {\n  throw new Error('Could not parse decisions from OpenAI: ' + JSON.stringify(res).slice(0, 300));\n}\nconst decisions = (plan.decisions || []).slice(0, 3);\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst sevColor = (s) => (s >= 5 ? '#b42318' : s >= 3 ? '#c2410c' : '#a16207');\nconst prioColor = { 'عالية': '#b42318', 'متوسطة': '#c2410c', 'منخفضة': '#4b5563' };\nconst stars = (n) => (n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '');\nconst week = rows[0] ? rows[0].week : { from: '', to: '' };\nconst { stats } = agg;\n\nconst FONT = \"font-family:Tahoma,Arial,sans-serif;\";\nconst card = 'background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin:0 0 12px;';\nconst h2 = 'font-size:16px;margin:22px 0 10px;color:#111827;';\n\nconst statCell = (label, value, color) =>\n  `<td style=\"width:25%;text-align:center;padding:10px 4px;background:#f9fafb;border-radius:8px;\">\n     <div style=\"font-size:20px;font-weight:bold;color:${color};\">${esc(value)}</div>\n     <div style=\"font-size:12px;color:#6b7280;\">${label}</div></td>`;\n\nconst decisionsHtml = decisions.map((d, i) => `\n  <div style=\"${card}border-right:4px solid ${prioColor[d.priority] || '#4b5563'};\">\n    <div style=\"font-size:12px;color:${prioColor[d.priority] || '#4b5563'};font-weight:bold;\">قرار ${i + 1} · أولوية ${esc(d.priority)} · ${esc(d.owner)}</div>\n    <div style=\"font-size:15px;font-weight:bold;margin:6px 0;color:#111827;\">${esc(d.title)}</div>\n    <div style=\"font-size:13px;color:#374151;margin:0 0 6px;\">📊 ${esc(d.evidence)}</div>\n    <div style=\"font-size:13px;color:#111827;background:#f0fdf4;border-radius:6px;padding:8px;\">✅ ${esc(d.action)}</div>\n  </div>`).join('');\n\nconst tableRow = (cells, header = false) =>\n  `<tr>${cells.map((c) => `<${header ? 'th' : 'td'} style=\"padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:right;font-size:13px;${header ? 'color:#6b7280;font-weight:normal;' : ''}\">${c}</${header ? 'th' : 'td'}>`).join('')}</tr>`;\n\nconst repeated = agg.byDishShiftIssue.filter((g) => g.count >= 2);\nconst singles = agg.byDishShiftIssue.filter((g) => g.count === 1).length;\nconst patternsHtml = repeated.length\n  ? `<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\">\n      ${tableRow(['الصحن · الشفت', 'المشكلة', 'العدد', 'الحدّة'], true)}\n      ${repeated.map((g) => tableRow([\n        `<b>${esc(g.dish)}</b><br><span style=\"color:#6b7280;font-size:12px;\">${esc(g.shift)}</span>`,\n        esc(g.issue_ar), `<b>${g.count}</b>`,\n        `<span style=\"color:${sevColor(g.severity_avg)};\">${g.severity_avg}/5</span>`])).join('')}\n    </table>`\n  : '<p style=\"font-size:13px;color:#6b7280;\">ما في أنماط متكررة لنفس الصحن بنفس الشفت هالأسبوع.</p>';\n\nconst weekPart = agg.byIssueWeekPart.filter((g) => g.count >= 2);\nconst weekPartHtml = weekPart.length\n  ? `<div style=\"font-size:13px;font-weight:bold;margin:16px 0 0;color:#111827;\">📅 حسب الفترة (كل الأصناف)</div>\n    <table role=\"presentation\" style=\"width:100%;border-collapse:collapse;margin-top:4px;\">\n      ${tableRow(['المشكلة', 'الفترة', 'العدد'], true)}\n      ${weekPart.map((g) => tableRow([esc(g.issue_ar), esc(g.week_part), `<b>${g.count}</b>`])).join('')}\n    </table>` : '';\n\nconst negatives = rows.filter((r) => r.reply_draft).sort((a, b) => b.severity - a.severity);\nconst repliesHtml = negatives.map((r) => `\n  <div style=\"${card}\">\n    <div style=\"font-size:12px;color:#6b7280;\">${esc(r.review_id)} · ${esc(r.source)} · ${esc(r.shift)} · <span style=\"color:#d97706;\">${stars(r.rating)}</span></div>\n    <div style=\"font-size:13px;color:#374151;margin:6px 0;\">«${esc(r.review_text.slice(0, 220))}»</div>\n    <div style=\"font-size:12px;color:${sevColor(r.severity)};margin:0 0 6px;\">${esc(r.summary)}</div>\n    <div style=\"font-size:13px;color:#111827;background:#f3f4f6;border-radius:6px;padding:8px;\" dir=\"auto\">✍️ ${esc(r.reply_draft)}</div>\n  </div>`).join('');\n\nconst sheetUrl = `https://docs.google.com/spreadsheets/d/${cfg.sheet_id}`;\n\nconst html = `<!doctype html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n<body style=\"margin:0;padding:0;background:#f3f4f6;\">\n<div dir=\"rtl\" style=\"${FONT}max-width:600px;margin:0 auto;padding:16px;background:#f3f4f6;color:#111827;line-height:1.6;\">\n  <div style=\"font-size:13px;color:#6b7280;\">${esc(cfg.restaurant_name)} · تقرير المراجعات الأسبوعي</div>\n  <div style=\"font-size:12px;color:#9ca3af;margin-bottom:12px;\">${esc(week.from)} ← ${esc(week.to)}</div>\n\n  <div style=\"background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:14px 16px;font-size:16px;font-weight:bold;color:#9a3412;\">${esc(plan.headline)}</div>\n\n  <table role=\"presentation\" style=\"width:100%;border-collapse:separate;border-spacing:6px;margin:12px 0;\"><tr>\n    ${statCell('مراجعة', stats.total, '#111827')}\n    ${statCell('فيها مشكلة', stats.issues, '#c2410c')}\n    ${statCell('إيجابية', stats.positive, '#15803d')}\n    ${statCell('معدّل التقييم', stats.avg_rating ?? '-', '#d97706')}\n  </tr></table>\n\n  <h2 style=\"${h2}\">🎯 3 قرارات لهالأسبوع</h2>\n  ${decisionsHtml}\n\n  <h2 style=\"${h2}\">🔁 الأنماط المتكررة (نفس الصحن · نفس الشفت)</h2>\n  <div style=\"${card}\">${patternsHtml}${weekPartHtml}\n    <div style=\"font-size:12px;color:#6b7280;margin-top:8px;\">+ ${singles} شكوى منفردة (التفاصيل بالشيت)</div>\n  </div>\n\n  <h2 style=\"${h2}\">✍️ مسودات ردود جاهزة (${negatives.length})</h2>\n  <div style=\"font-size:12px;color:#6b7280;margin:-4px 0 8px;\">راجعها قبل النشر. المسودة ما بتوعد بتعويض.</div>\n  ${repliesHtml}\n\n  ${stats.needs_review ? `<div style=\"${card}color:#b42318;font-size:13px;\">⚠️ ${stats.needs_review} مراجعة ما انصنّفت تلقائياً، معلّمة بالشيت.</div>` : ''}\n\n  <div style=\"text-align:center;margin:20px 0 8px;\">\n    <a href=\"${sheetUrl}\" style=\"display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;\">افتح الشيت الكامل</a>\n  </div>\n  <div style=\"font-size:11px;color:#9ca3af;text-align:center;\">تقرير تلقائي · التصنيف بالذكاء الاصطناعي، والعدّ بالكود</div>\n</div></body></html>`;\n\nreturn [{\n  json: {\n    to: cfg.report_to,\n    subject: `📋 مراجعات الأسبوع · ${cfg.restaurant_name} · ${week.from} ← ${week.to}`,\n    headline: plan.headline,\n    decisions,\n    html,\n  },\n}];\n"
+        "jsCode": "// Build a mobile-friendly RTL HTML email (inline styles only: Gmail strips <style>).\nconst cfg = $('Config').first().json;\nconst agg = $('Aggregate patterns').first().json;\nconst rows = $('Parse classification').all().map((i) => i.json);\nconst res = $input.first().json;\n\nlet plan;\ntry {\n  plan = JSON.parse(res.choices[0].message.content);\n} catch (e) {\n  throw new Error('Could not parse decisions from OpenAI: ' + JSON.stringify(res).slice(0, 300));\n}\nconst decisions = (plan.decisions || []).slice(0, 3);\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst sevColor = (s) => (s >= 5 ? '#b42318' : s >= 3 ? '#c2410c' : '#a16207');\nconst prioColor = { 'عالية': '#b42318', 'متوسطة': '#c2410c', 'منخفضة': '#4b5563' };\nconst stars = (n) => (n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '');\nconst week = rows[0] ? rows[0].week : { from: '', to: '' };\nconst { stats } = agg;\n\nconst FONT = \"font-family:Tahoma,Arial,sans-serif;\";\nconst card = 'background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin:0 0 12px;';\nconst h2 = 'font-size:16px;margin:22px 0 10px;color:#111827;';\n\nconst statCell = (label, value, color) =>\n  `<td style=\"width:25%;text-align:center;padding:10px 4px;background:#f9fafb;border-radius:8px;\">\n     <div style=\"font-size:20px;font-weight:bold;color:${color};\">${esc(value)}</div>\n     <div style=\"font-size:12px;color:#6b7280;\">${label}</div></td>`;\n\nconst decisionsHtml = decisions.map((d, i) => `\n  <div style=\"${card}border-right:4px solid ${prioColor[d.priority] || '#4b5563'};\">\n    <div style=\"font-size:12px;color:${prioColor[d.priority] || '#4b5563'};font-weight:bold;\">قرار ${i + 1} · أولوية ${esc(d.priority)} · ${esc(d.owner)}</div>\n    <div style=\"font-size:15px;font-weight:bold;margin:6px 0;color:#111827;\">${esc(d.title)}</div>\n    <div style=\"font-size:13px;color:#374151;margin:0 0 6px;\">📊 ${esc(d.evidence)}</div>\n    <div style=\"font-size:13px;color:#111827;background:#f0fdf4;border-radius:6px;padding:8px;\">✅ ${esc(d.action)}</div>\n  </div>`).join('');\n\nconst tableRow = (cells, header = false) =>\n  `<tr>${cells.map((c) => `<${header ? 'th' : 'td'} style=\"padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:right;font-size:13px;${header ? 'color:#6b7280;font-weight:normal;' : ''}\">${c}</${header ? 'th' : 'td'}>`).join('')}</tr>`;\n\nconst repeated = agg.byDishShiftIssue.filter((g) => g.count >= 2);\nconst singles = agg.byDishShiftIssue.filter((g) => g.count === 1).length;\nconst patternsHtml = repeated.length\n  ? `<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\">\n      ${tableRow(['الصحن · الشفت', 'المشكلة', 'العدد', 'الحدّة'], true)}\n      ${repeated.map((g) => tableRow([\n        `<b>${esc(g.dish)}</b><br><span style=\"color:#6b7280;font-size:12px;\">${esc(g.shift)}</span>`,\n        esc(g.issue_ar), `<b>${g.count}</b>`,\n        `<span style=\"color:${sevColor(g.severity_avg)};\">${g.severity_avg}/5</span>`])).join('')}\n    </table>`\n  : '<p style=\"font-size:13px;color:#6b7280;\">ما في أنماط متكررة لنفس الصحن بنفس الشفت هالأسبوع.</p>';\n\nconst weekPart = agg.byIssueWeekPart.filter((g) => g.count >= 2);\nconst weekPartHtml = weekPart.length\n  ? `<div style=\"font-size:13px;font-weight:bold;margin:16px 0 0;color:#111827;\">📅 حسب الفترة (كل الأصناف)</div>\n    <table role=\"presentation\" style=\"width:100%;border-collapse:collapse;margin-top:4px;\">\n      ${tableRow(['المشكلة', 'الفترة', 'العدد'], true)}\n      ${weekPart.map((g) => tableRow([esc(g.issue_ar), esc(g.week_part), `<b>${g.count}</b>`])).join('')}\n    </table>` : '';\n\nconst negatives = rows.filter((r) => r.reply_draft).sort((a, b) => b.severity - a.severity);\nconst repliesHtml = negatives.map((r) => `\n  <div style=\"${card}\">\n    <div style=\"font-size:12px;color:#6b7280;\">${esc(r.review_id)} · ${esc(r.source)} · ${esc(r.shift)} · <span style=\"color:#d97706;\">${stars(r.rating)}</span></div>\n    <div style=\"font-size:13px;color:#374151;margin:6px 0;\">«${esc(r.review_text.slice(0, 220))}»</div>\n    <div style=\"font-size:12px;color:${sevColor(r.severity)};margin:0 0 6px;\">${esc(r.summary)}</div>\n    <div style=\"font-size:13px;color:#111827;background:#f3f4f6;border-radius:6px;padding:8px;\" dir=\"auto\">✍️ ${esc(r.reply_draft)}</div>\n  </div>`).join('');\n\nconst sheetUrl = 'https://docs.google.com' + `/spreadsheets/d/${cfg.sheet_id}`;\n\nconst html = `<!doctype html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n<body style=\"margin:0;padding:0;background:#f3f4f6;\">\n<div dir=\"rtl\" style=\"${FONT}max-width:600px;margin:0 auto;padding:16px;background:#f3f4f6;color:#111827;line-height:1.6;\">\n  <div style=\"font-size:13px;color:#6b7280;\">${esc(cfg.restaurant_name)} · تقرير المراجعات الأسبوعي</div>\n  <div style=\"font-size:12px;color:#9ca3af;margin-bottom:12px;\">${esc(week.from)} ← ${esc(week.to)}</div>\n\n  <div style=\"background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:14px 16px;font-size:16px;font-weight:bold;color:#9a3412;\">${esc(plan.headline)}</div>\n\n  <table role=\"presentation\" style=\"width:100%;border-collapse:separate;border-spacing:6px;margin:12px 0;\"><tr>\n    ${statCell('مراجعة', stats.total, '#111827')}\n    ${statCell('فيها مشكلة', stats.issues, '#c2410c')}\n    ${statCell('إيجابية', stats.positive, '#15803d')}\n    ${statCell('معدّل التقييم', stats.avg_rating ?? '-', '#d97706')}\n  </tr></table>\n\n  <h2 style=\"${h2}\">🎯 3 قرارات لهالأسبوع</h2>\n  ${decisionsHtml}\n\n  <h2 style=\"${h2}\">🔁 الأنماط المتكررة (نفس الصحن · نفس الشفت)</h2>\n  <div style=\"${card}\">${patternsHtml}${weekPartHtml}\n    <div style=\"font-size:12px;color:#6b7280;margin-top:8px;\">+ ${singles} شكوى منفردة (التفاصيل بالشيت)</div>\n  </div>\n\n  <h2 style=\"${h2}\">✍️ مسودات ردود جاهزة (${negatives.length})</h2>\n  <div style=\"font-size:12px;color:#6b7280;margin:-4px 0 8px;\">راجعها قبل النشر. المسودة ما بتوعد بتعويض.</div>\n  ${repliesHtml}\n\n  ${stats.needs_review ? `<div style=\"${card}color:#b42318;font-size:13px;\">⚠️ ${stats.needs_review} مراجعة ما انصنّفت تلقائياً، معلّمة بالشيت.</div>` : ''}\n\n  <div style=\"text-align:center;margin:20px 0 8px;\">\n    <a href=\"${sheetUrl}\" style=\"display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;\">افتح الشيت الكامل</a>\n  </div>\n  <div style=\"font-size:11px;color:#9ca3af;text-align:center;\">تقرير تلقائي · التصنيف بالذكاء الاصطناعي، والعدّ بالكود</div>\n</div></body></html>`;\n\nreturn [{\n  json: {\n    to: cfg.report_to,\n    subject: `📋 مراجعات الأسبوع · ${cfg.restaurant_name} · ${week.from} ← ${week.to}`,\n    headline: plan.headline,\n    decisions,\n    html,\n  },\n}];\n"
       }
     },
     {
-      "id": "79736cf4-ec30-4fa4-b7d9-3d4873b218e6",
+      "id": "4371299e-3a46-425a-bd0c-df3aa5add100",
       "name": "Send report (Gmail)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -346,7 +334,6 @@
         2680,
         300
       ],
-      "webhookId": "edc6364b-1805-4206-850d-4ff4c056e5d3",
       "parameters": {
         "sendTo": "={{ $json.to }}",
         "subject": "={{ $json.subject }}",
@@ -358,7 +345,7 @@
       }
     },
     {
-      "id": "86ec7d67-1f44-4232-bca0-60e95d4f6a12",
+      "id": "2f186686-60ff-4f26-be76-e4dbb6904a61",
       "name": "Note · Classify",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -374,7 +361,7 @@
       }
     },
     {
-      "id": "eca15675-9fed-478a-a524-436a971941bc",
+      "id": "74c20f6c-34a2-453f-bbc1-184cc3d165c5",
       "name": "Note · Count",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -390,7 +377,7 @@
       }
     },
     {
-      "id": "6bcd1841-4fb4-42fd-90d7-b081cc0bca45",
+      "id": "01032576-dabe-4f47-87ac-341ca3dc78f5",
       "name": "Note · Report",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
