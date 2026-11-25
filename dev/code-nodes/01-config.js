@@ -13,7 +13,12 @@ return [{
     report_to: 'YOUR_EMAIL@example.com',
 
     restaurant_name: 'بيت الصاج',
-    model: 'gpt-4.1-mini',
+    // Language model, through the OpenAI-compatible chat API.
+    // Credential: "Header Auth" with Name = Authorization, Value = Bearer <your key>.
+    //   FREE  · Google Gemini (key from aistudio.google.com/apikey):
+    llm_url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    model: 'gemini-2.5-flash',
+    //   PAID  · OpenAI: llm_url 'https://api.openai.com/v1/chat/completions', model 'gpt-4.1-mini'
 
     // Week window. reference_date = "today" for the filter.
     //   DEMO: '2026-11-22' → reads the demo week 15–21 Nov 2026

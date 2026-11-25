@@ -3,6 +3,18 @@
 const cfg = $('Config').first().json;
 const rows = $('Parse classification').all().map((i) => i.json);
 
+// OpenAI's strict mode needs additionalProperties:false on every object; Gemini's
+// OpenAI-compatible endpoint is happier without it. The code validates the answer either way.
+const STRICT = /api\.openai\.com/.test(cfg.llm_url);
+function lock(schema) {
+  if (!STRICT || !schema || typeof schema !== 'object') return schema;
+  const s = { ...schema };
+  if (s.type === 'object') s.additionalProperties = false;
+  if (s.properties) s.properties = Object.fromEntries(Object.entries(s.properties).map(([k, v]) => [k, lock(v)]));
+  if (s.items) s.items = lock(s.items);
+  return s;
+}
+
 const ISSUE_AR = {
   cold_food: 'أكل بارد', taste_quality: 'طعم/جودة', portion_size: 'الكمية', hygiene: 'نظافة',
   wait_time: 'انتظار', delivery_delay: 'تأخير توصيل', order_accuracy: 'غلط بالطلب',
@@ -82,10 +94,9 @@ const decisionsBody = {
     type: 'json_schema',
     json_schema: {
       name: 'weekly_decisions',
-      strict: true,
-      schema: {
+      strict: STRICT,
+      schema: lock({
         type: 'object',
-        additionalProperties: false,
         required: ['headline', 'decisions'],
         properties: {
           headline: { type: 'string' },
@@ -93,7 +104,6 @@ const decisionsBody = {
             type: 'array',
             items: {
               type: 'object',
-              additionalProperties: false,
               required: ['title', 'evidence', 'action', 'owner', 'priority'],
               properties: {
                 title: { type: 'string' },
@@ -105,7 +115,7 @@ const decisionsBody = {
             },
           },
         },
-      },
+      }),
     },
   },
 };

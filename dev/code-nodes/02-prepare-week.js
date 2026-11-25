@@ -2,6 +2,18 @@
 // and build one OpenAI Structured Output request per review.
 const cfg = $('Config').first().json;
 
+// OpenAI's strict mode needs additionalProperties:false on every object; Gemini's
+// OpenAI-compatible endpoint is happier without it. The code validates the answer either way.
+const STRICT = /api\.openai\.com/.test(cfg.llm_url);
+function lock(schema) {
+  if (!STRICT || !schema || typeof schema !== 'object') return schema;
+  const s = { ...schema };
+  if (s.type === 'object') s.additionalProperties = false;
+  if (s.properties) s.properties = Object.fromEntries(Object.entries(s.properties).map(([k, v]) => [k, lock(v)]));
+  if (s.items) s.items = lock(s.items);
+  return s;
+}
+
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const ISSUE_TYPES = [
   'cold_food', 'taste_quality', 'portion_size', 'hygiene', 'wait_time', 'delivery_delay',
@@ -75,20 +87,19 @@ for (const item of $input.all()) {
       type: 'json_schema',
       json_schema: {
         name: 'review_classification',
-        strict: true,
-        schema: {
+        strict: STRICT,
+        schema: lock({
           type: 'object',
-          additionalProperties: false,
           required: ['dish', 'issue_type', 'severity', 'sentiment', 'summary', 'reply_draft'],
           properties: {
             dish: { type: 'string', enum: [...cfg.menu, 'عام', 'غير محدد'] },
             issue_type: { type: 'string', enum: ISSUE_TYPES },
-            severity: { type: 'integer', enum: [0, 1, 2, 3, 4, 5] },
+            severity: { type: 'integer', description: '0 to 5' },
             sentiment: { type: 'string', enum: ['positive', 'mixed', 'negative'] },
             summary: { type: 'string' },
             reply_draft: { type: 'string' },
           },
-        },
+        }),
       },
     },
   };

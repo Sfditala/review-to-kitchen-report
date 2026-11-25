@@ -57,7 +57,8 @@ async function runCode(name, input) {
 const sevFor = (t, rating) => (t.expected_issue_type === 'none' ? 0 : t.expected_issue_type === 'hygiene' ? 5 : { 1: 4, 2: 3, 3: 2, 4: 1, 5: 1 }[rating]);
 function mockClassify(item) {
   const body = item.json.openai_body;
-  assert.equal(body.response_format.json_schema.strict, true);
+  assert.equal(body.response_format.type, 'json_schema');
+  assert.equal(body.model, 'gemini-2.5-flash');
   const t = truth[item.json.review_id];
   const sev = sevFor(t, item.json.rating);
   const content = {
@@ -68,7 +69,8 @@ function mockClassify(item) {
   };
   // Enum check: the mocked answer must be valid against the schema we send.
   const props = body.response_format.json_schema.schema.properties;
-  for (const k of ['dish', 'issue_type', 'severity']) assert.ok(props[k].enum.includes(content[k]), `${k}=${content[k]} not in enum`);
+  for (const k of ['dish', 'issue_type']) assert.ok(props[k].enum.includes(content[k]), `${k}=${content[k]} not in enum`);
+  assert.equal(props.severity.type, 'integer');
   if (item.json.review_id === 'R010') return { json: { choices: [{ message: { content: 'not json' } }] } }; // simulate a bad answer
   return { json: { choices: [{ message: { content: JSON.stringify(content) } }], usage: { total_tokens: 420 } } };
 }
@@ -87,13 +89,13 @@ function mockDecisions(agg) {
 await runCode('Config', []);
 outputs['Read reviews'] = sheet.map((json) => ({ json }));
 const week = await runCode('Prepare week', outputs['Read reviews']);
-outputs['Classify review (OpenAI)'] = week.map(mockClassify);
-const parsed = await runCode('Parse classification', outputs['Classify review (OpenAI)']);
+outputs['Classify review (LLM)'] = week.map(mockClassify);
+const parsed = await runCode('Parse classification', outputs['Classify review (LLM)']);
 const cols = await runCode('Sheet columns', parsed);
 outputs['Write labels to sheet'] = cols;
 const [agg] = await runCode('Aggregate patterns', cols);
-outputs['Write 3 decisions (OpenAI)'] = [mockDecisions(agg.json)];
-const [mail] = await runCode('Build email', outputs['Write 3 decisions (OpenAI)']);
+outputs['Write 3 decisions (LLM)'] = [mockDecisions(agg.json)];
+const [mail] = await runCode('Build email', outputs['Write 3 decisions (LLM)']);
 
 // ---- checks ----
 const ids = week.map((i) => i.json.review_id);

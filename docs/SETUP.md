@@ -4,12 +4,18 @@
 
 | Credential بـ n8n | بتنستخدم بـ |
 |---|---|
-| **OpenAI API** | Classify review · Write 3 decisions |
+| **Header Auth** (مفتاح الموديل) | Classify review · Write 3 decisions |
 | **Google Sheets OAuth2** | Read reviews · Write labels to sheet |
 | **Gmail OAuth2** | Send report · Email the error |
 
-**OpenAI:** platform.openai.com ← API keys ← Create، وتأكد إنو في رصيد بالحساب (المفتاح بدون رصيد بيرجّع 429).
-بـ n8n: Credentials ← Add ← **OpenAI**. الـ HTTP nodes مضبوطة على *Predefined Credential Type ← OpenAI API*، فبس اختار الـ credential.
+**مفتاح الموديل (مجاني):** aistudio.google.com/apikey ← **Create API key** (مفتاح Gemini، بدون بطاقة).
+بـ n8n: Credentials ← Add ← **Header Auth**:
+- Name: `Authorization`
+- Value: `Bearer ` وبعدها المفتاح (فيه مسافة بعد Bearer)
+
+اختاري هاد الـ credential بـ **Classify review (LLM)** و **Write 3 decisions (LLM)**.
+
+> بدك OpenAI بدل Gemini؟ بـ **Config** غيّري `llm_url` لـ `https://api.openai.com/v1/chat/completions` و `model` لـ `gpt-4.1-mini`، وحطي مفتاح OpenAI بنفس الـ Header Auth. وبالـ node **Classify** ارفعي الـ Batch Size لـ 5 والـ Interval لـ 1000.
 
 **Google (Sheets + Gmail):** على n8n Cloud بكبسة *Sign in with Google*.
 على سيرفر خاص بدك OAuth client من Google Cloud: فعّل Sheets API و Gmail API و Drive API، وانسخ الـ redirect URL من نافذة الـ credential.
@@ -39,7 +45,7 @@
 ## 4. أول تشغيل
 
 1. كبسي **Execute workflow** (من `Run manually (test)`)
-2. المتوقع: ~40–60 ثانية (40 مراجعة، 5 بالثانية)
+2. المتوقع: ~5 دقايق على Gemini المجاني (مراجعة كل 6.5 ثانية عشان ما نتعدّى حد الطلبات)
 3. تأكدي:
    - [ ] **Prepare week** طلّع **40** item (مش 42)
    - [ ] الشيت تعبّى بالأعمدة الجديدة
@@ -52,7 +58,8 @@
 - المطعم الحقيقي: عدّلي `menu` و `restaurant_name`، وإذا ما في وقت زيارة، حطي تاريخ المراجعة بـ `review_date` (الشفت رح يطلع "غداء" دايماً، وهاد حد موثّق)
 
 ## 6. التكلفة (تقديري)
-كل مراجعة ≈ 600 token دخل + 150 خرج. 40 مراجعة + طلب القرارات ≈ **أقل من 3 سنت** بـ `gpt-4.1-mini`.
+**على Gemini المجاني: صفر.** 41 طلب بالأسبوع أقل بكتير من الحد اليومي للمستوى المجاني.
+على OpenAI: كل مراجعة ≈ 600 token دخل + 150 خرج، يعني 40 مراجعة + طلب القرارات ≈ **أقل من 3 سنت** بـ `gpt-4.1-mini`.
 [⚠️ بحاجة لرقم مقاس: شوفي `stats.tokens` بمخرجات **Aggregate patterns** بعد التشغيل]
 
 ## 7. لو بدك تعدّلي الكود
@@ -63,4 +70,4 @@ node dev/build.mjs
 ```bash
 node dev/run-local.mjs
 ```
-(الأول بيبني `workflow.json` من جديد، والتاني بيختبر كل شي محلياً بدون OpenAI)
+(الأول بيبني `workflow.json` من جديد، والتاني بيختبر كل شي محلياً بدون مفاتيح)

@@ -37,7 +37,7 @@ These are reviews from the demo data, in Arabic, dialect and English, the way th
 
 **Draft replies.** One per unhappy review, in the customer's language, worst first. They never promise a refund and never blame the customer. Someone still reads them before posting.
 
-<sub>From the offline test. The numbers and tables are real output of the workflow's code. The decision and reply wording is a stand-in, because OpenAI isn't called in that test.</sub>
+<sub>From the offline test. The numbers and tables are real output of the workflow's code. The decision and reply wording is a stand-in, because the model isn't called in that test.</sub>
 
 </td>
 </tr>
@@ -57,11 +57,11 @@ Read one by one, every complaint looks like bad luck. Counted by day and shift, 
 flowchart LR
     T["Every Sunday 9:00"] --> R["Google Sheets<br/>this week's reviews"]
     R --> F["Filter the week<br/>+ work out the shift"]
-    F --> C(("OpenAI<br/>tag each review"))
+    F --> C(("Gemini / OpenAI<br/>tag each review"))
     C --> V["Validate"]
     V --> W["Write tags<br/>back to the sheet"]
     W --> G["Count patterns<br/>3 groupings"]
-    G --> D(("OpenAI<br/>3 decisions"))
+    G --> D(("Gemini / OpenAI<br/>3 decisions"))
     D --> E["Mobile email<br/>Arabic, right to left"]
     E --> M["Gmail"]
 ```
@@ -72,11 +72,12 @@ Restaurant owners read bad reviews one at a time and answer them one at a time. 
 
 ## How it was built
 
-**Stack:** n8n · OpenAI gpt-4.1-mini (Structured Outputs) · Google Sheets · Gmail
+**Stack:** n8n · Google Gemini 2.5 Flash, free tier (or any OpenAI-compatible model) · Google Sheets · Gmail
 
 <details open>
 <summary><b>Design decisions</b></summary>
 
+- **Runs free.** Any OpenAI-compatible model works. The demo uses Gemini's free tier, paced to stay under its rate limit.
 - **The model tags, the code counts.** The decisions model never sees a review. It gets the counts from code and has to cite them. It can't say "7 complaints" when there were 5.
 - **Closed lists, not free text.** The dish comes from the menu, and the problem from a fixed list. Otherwise "شاورما", "ساندويش شاورما دجاج" and "شاورما العربي" are three dishes and nothing adds up.
 - **The shift comes from the data.** It's worked out from the visit time, not guessed from the text. Reviews almost never say "Friday night".
@@ -131,7 +132,8 @@ This checks the plumbing. How well the model itself tags the reviews gets measur
 | The dish as free text | A closed menu list, or the same dish splits into three names. |
 | One grouping: dish × shift × problem | Three. Late deliveries are a weekend pattern spread over shifts, and one grouping hid them. |
 | Nothing on severity | A written 0–5 scale, and single complaints of 4+ always reach the decisions. |
-| The OpenAI node | An HTTP request with `json_schema` in strict mode, so the model can't return a value outside the lists. |
+| The OpenAI node, and an OpenAI key | One HTTP request to any OpenAI-compatible API. I didn't have an OpenAI key, so it runs on Gemini's free tier, one review every 6.5 seconds. Switching provider is two lines in Config. |
+| Trust the model's output format | `json_schema` asks for the lists, and code checks every answer anyway, because not every provider enforces the schema strictly. |
 | "Read this week's reviews" | A filter with a demo date, and date parsing for both text and Sheets' serial numbers. |
 | Nothing on bad answers | Validation that flags the review and lets the run continue. |
 | A sheet tab named `reviews` | Google names the tab itself when it converts a CSV. The tab is read by its ID instead. |
@@ -244,8 +246,8 @@ Schedule (أحد 9:00)
 1. In n8n, go to **Workflows → Import from File** and choose [`shared/error-alert.workflow.json`](shared/error-alert.workflow.json), then [`workflow.json`](workflow.json).
 2. Import [`data/reviews.csv`](data/reviews.csv) into a new Google Sheet.
 3. In the **Config** node, replace `YOUR_GOOGLE_SHEET_ID` and `YOUR_EMAIL@example.com`.
-4. Connect OpenAI, Google Sheets and Gmail credentials, and set `D0 · error-alert` as the error workflow in Settings.
-5. Run **Execute workflow**. The email arrives in about a minute. For production, clear `reference_date` and publish.
+4. Connect Google Sheets and Gmail, plus a **Header Auth** credential for the model: name `Authorization`, value `Bearer <your key>` (a free Gemini key from Google AI Studio works). Set `D0 · error-alert` as the error workflow in Settings.
+5. Run **Execute workflow**. On the free tier the email arrives in about 5 minutes, because reviews are sent one at a time to stay under the rate limit. For production, clear `reference_date` and publish.
 
 Full setup in Arabic, including Google OAuth and costs: [`docs/SETUP.md`](docs/SETUP.md). What to check after the first run: [`docs/review-checklist.md`](docs/review-checklist.md).
 

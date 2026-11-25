@@ -20,18 +20,20 @@ const local = existsSync(localPath) ? JSON.parse(readFileSync(localPath, 'utf8')
 
 const openAiCall = (name, pos, batch) => ({
   id: id(), name, type: 'n8n-nodes-base.httpRequest', typeVersion: 4.2, position: pos,
-  retryOnFail: true, maxTries: 3, waitBetweenTries: 3000,
+  retryOnFail: true, maxTries: 4, waitBetweenTries: 5000,
   parameters: {
     method: 'POST',
-    url: 'https://api.openai.com/v1/chat/completions',
-    authentication: 'predefinedCredentialType',
-    nodeCredentialType: 'openAiApi',
+    // Works with any OpenAI-compatible chat API (Gemini free tier, OpenAI, Groq…): URL and model live in Config.
+    url: "={{ $('Config').first().json.llm_url }}",
+    authentication: 'genericCredentialType',
+    genericAuthType: 'httpHeaderAuth',
     sendBody: true,
     specifyBody: 'json',
     jsonBody: batch ? '={{ JSON.stringify($json.openai_body) }}' : '={{ JSON.stringify($json.decisionsBody) }}',
     options: {
       timeout: 60000,
-      ...(batch ? { batching: { batch: { batchSize: 5, batchInterval: 1000 } } } : {}),
+      // One review every 6.5 s keeps under free-tier limits (~10 requests/min). With a paid key: batchSize 5, interval 1000.
+      ...(batch ? { batching: { batch: { batchSize: 1, batchInterval: 6500 } } } : {}),
     },
   },
 });
@@ -49,11 +51,11 @@ const sticky = (name, content, pos, w, h, color) => ({
 const y = 300;
 const nodes = [
   sticky('Note · Setup', `## ⚙️ قبل أول تشغيل
-1. **Config** ← حطي إيميلك بـ \`report_to\` (الشيت جاهز ومربوط)
+1. **Config** ← \`sheet_id\` + إيميلك بـ \`report_to\`
 2. credentials:
-   - **Read reviews** + **Write labels** ← Google Sheets ✅ (موجود)
-   - **Classify** + **Decisions** ← OpenAI API (جديد)
-   - **Send report** ← Gmail OAuth2 (جديد)
+   - **Read reviews** + **Write labels** ← Google Sheets OAuth2
+   - **Classify** + **Decisions** ← Header Auth: \`Authorization\` = \`Bearer <مفتاح Gemini>\`
+   - **Send report** ← Gmail OAuth2
 3. للديمو: خلّي \`reference_date = 2026-11-22\`
 4. للإنتاج: \`reference_date = ''\` ثم **Publish**
 
@@ -72,7 +74,7 @@ const nodes = [
     } },
 
   codeNode('Prepare week', '02-prepare-week.js', [X * 2 + 80, y]),
-  openAiCall('Classify review (OpenAI)', [X * 3 + 80, y], true),
+  openAiCall('Classify review (LLM)', [X * 3 + 80, y], true),
   codeNode('Parse classification', '03-parse-classification.js', [X * 4 + 80, y]),
   codeNode('Sheet columns', '04-sheet-columns.js', [X * 5 + 80, y]),
 
@@ -90,7 +92,7 @@ const nodes = [
     } },
 
   codeNode('Aggregate patterns', '05-aggregate-patterns.js', [X * 7 + 80, y]),
-  openAiCall('Write 3 decisions (OpenAI)', [X * 8 + 80, y], false),
+  openAiCall('Write 3 decisions (LLM)', [X * 8 + 80, y], false),
   codeNode('Build email', '06-build-email.js', [X * 9 + 80, y]),
 
   { id: id(), name: 'Send report (Gmail)', type: 'n8n-nodes-base.gmail', typeVersion: 2.1, position: [X * 10 + 80, y],
@@ -102,7 +104,7 @@ const nodes = [
   sticky('Note · Classify', `### 1 · تصنيف كل مراجعة
 - الشفت **بينحسب بالكود** من \`visit_datetime\`، مش من الموديل
 - الصحن من **قائمة مغلقة** (المنيو بـ Config)
-- Structured Output (\`json_schema strict\`)`, [X * 2 + 40, 40], 560, 200, 1),
+- Structured Output (\`json_schema\`) + تحقق بالكود`, [X * 2 + 40, 40], 560, 200, 1),
   sticky('Note · Count', `### 2 · العدّ بالكود
 صحن × شفت × مشكلة، مرتّب بالتكرار ثم مجموع الحدّة.
 الموديل بياخد **الأرقام الجاهزة** بس.`, [X * 6 + 40, 40], 500, 200, 1),
@@ -113,8 +115,8 @@ HTML بعرض 600px و RTL للجوال.`, [X * 8 + 40, 40], 560, 200, 1),
 
 const byName = Object.fromEntries(nodes.map((n) => [n.name, n]));
 const chain = [
-  'Config', 'Read reviews', 'Prepare week', 'Classify review (OpenAI)', 'Parse classification',
-  'Sheet columns', 'Write labels to sheet', 'Aggregate patterns', 'Write 3 decisions (OpenAI)',
+  'Config', 'Read reviews', 'Prepare week', 'Classify review (LLM)', 'Parse classification',
+  'Sheet columns', 'Write labels to sheet', 'Aggregate patterns', 'Write 3 decisions (LLM)',
   'Build email', 'Send report (Gmail)',
 ];
 const connections = {
