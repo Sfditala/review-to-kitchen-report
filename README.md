@@ -37,7 +37,7 @@ These are reviews from the demo data, in Arabic, dialect and English, the way th
 
 **Draft replies.** One per unhappy review, in the customer's language, worst first. They never promise a refund and never blame the customer. Someone still reads them before posting.
 
-<sub>The real email from the first successful run in n8n, with Gemini writing the decisions and replies.</sub>
+<sub>The real email from a run in n8n, with Gemini writing the decisions and replies.</sub>
 
 </td>
 </tr>
