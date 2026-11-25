@@ -7,10 +7,10 @@ Before posting: replace `[X]/25` with the score from `score.md`.
 
 ## العربي
 
+🗓️ تحدي 7 أيام · 7 مشاريع | اليوم 1 · مطاعم 🍽️
+
 5 زباين اشتكوا إنو الشاورما باردة. نفس الليلة، نفس الشفت.
 وصاحب المطعم قرأ كل شكوى لحالها، ورد على كل وحدة "نعتذر عن الإزعاج".
-
-اليوم 1 من 7 · مطاعم 🍽️
 
 😩 المشكلة:
 المراجعات السيئة بتنقرأ وحدة وحدة، فما حدا بينتبه إنها عن نفس الصحن بنفس الشفت، والشكوى ما بتوصل للمطبخ.
@@ -46,10 +46,10 @@ github.com/Sfditala/review-to-kitchen-report
 
 ## English
 
+🗓️ 7 Days · 7 Projects challenge | Day 1 · Restaurants 🍽️
+
 Five customers said the shawarma was cold. Same night, same shift.
 The owner read each review on its own and replied "sorry to hear that" five times.
-
-Day 1 of 7 · Restaurants 🍽️
 
 😩 The problem:
 Bad reviews get read one at a time. Nobody notices they're about the same dish on the same shift, so the complaint never reaches the kitchen.
