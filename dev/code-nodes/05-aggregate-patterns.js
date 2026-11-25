@@ -57,7 +57,7 @@ const stats = {
   positive: rows.filter((r) => !r.is_issue).length,
   avg_rating: rated.length ? +(rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(1) : null,
   needs_review: rows.filter((r) => r.needs_review).length,
-  tokens: rows.reduce((s, r) => s + (r.tokens || 0), 0),
+  tokens: (() => { try { const u = $('Classify reviews (LLM)').first().json.usage; return u ? u.total_tokens : null; } catch (e) { return null; } })(),
 };
 
 const strip = ({ review_ids, severity_sum, ...g }) => g;

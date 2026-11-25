@@ -1,9 +1,19 @@
-// Join each OpenAI response back to its review (same order, 1:1) and validate it.
-// Anything the model returns that breaks the rules is corrected here, in code.
+// Match the model's answers back to the reviews by review_id, and validate every one.
+// Anything missing or outside the lists is corrected or flagged here, in code.
 const reviews = $('Prepare week').all();
-const responses = $input.all();
-if (reviews.length !== responses.length) {
-  throw new Error(`Got ${responses.length} classifications for ${reviews.length} reviews`);
+const res = $input.first().json;
+let byId = new Map();
+try {
+  const msg = res.choices[0].message;
+  if (msg.refusal) throw new Error('refusal');
+  const parsed = JSON.parse(msg.content);
+  byId = new Map((parsed.results || []).map((r) => [String(r.review_id), r]));
+} catch (e) {
+  // handled below
+}
+// If nothing usable came back, stop here: the error alert fires instead of an email full of ⚠️.
+if (!byId.size) {
+  throw new Error('The model returned no usable classifications: ' + JSON.stringify(res).slice(0, 400));
 }
 
 const classifiedAt = $now.toFormat('yyyy-MM-dd HH:mm');
@@ -12,17 +22,12 @@ const DISHES = new Set([...cfg.menu, 'عام', 'غير محدد']);
 const ISSUES = new Set(['cold_food', 'taste_quality', 'portion_size', 'hygiene', 'wait_time', 'delivery_delay',
   'order_accuracy', 'packaging', 'staff_behavior', 'price', 'ambience', 'other', 'none']);
 
-return reviews.map((rev, i) => {
-  const { openai_body, ...row } = rev.json;
-  const res = responses[i].json;
-  let c = null;
+return reviews.map((rev) => {
+  const row = rev.json;
+  let c = byId.get(String(row.review_id));
   let needs_review = false;
 
-  try {
-    const msg = res.choices[0].message;
-    if (msg.refusal) throw new Error('refusal');
-    c = JSON.parse(msg.content);
-  } catch (e) {
+  if (!c) {
     needs_review = true;
     c = { dish: 'غير محدد', issue_type: 'other', severity: 2, sentiment: 'mixed',
           summary: 'تعذّر التصنيف تلقائياً، راجعها يدوياً', reply_draft: '' };
@@ -57,7 +62,7 @@ return reviews.map((rev, i) => {
       is_negative,
       needs_review,
       classified_at: classifiedAt,
-      tokens: res.usage ? res.usage.total_tokens : null,
+      tokens: null,
     },
   };
 });

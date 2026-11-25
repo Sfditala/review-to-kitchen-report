@@ -59,20 +59,23 @@ function mockClassify(item) {
   const body = item.json.openai_body;
   assert.equal(body.response_format.type, 'json_schema');
   assert.equal(body.model, 'gemini-2.5-flash');
-  const t = truth[item.json.review_id];
-  const sev = sevFor(t, item.json.rating);
-  const content = {
-    dish: t.expected_dish, issue_type: t.expected_issue_type, severity: sev,
-    sentiment: sev === 0 ? 'positive' : sev >= 3 ? 'negative' : 'mixed',
-    summary: `ملخص تجريبي (${t.expected_issue_type})`,
-    reply_draft: sev > 0 || item.json.rating <= 3 ? 'شكراً على ملاحظتك، رح نراجع الموضوع مع الفريق. بيت الصاج' : '',
-  };
-  // Enum check: the mocked answer must be valid against the schema we send.
-  const props = body.response_format.json_schema.schema.properties;
-  for (const k of ['dish', 'issue_type']) assert.ok(props[k].enum.includes(content[k]), `${k}=${content[k]} not in enum`);
-  assert.equal(props.severity.type, 'integer');
-  if (item.json.review_id === 'R010') return { json: { choices: [{ message: { content: 'not json' } }] } }; // simulate a bad answer
-  return { json: { choices: [{ message: { content: JSON.stringify(content) } }], usage: { total_tokens: 420 } } };
+  const input = JSON.parse(body.messages[1].content);
+  const props = body.response_format.json_schema.schema.properties.results.items.properties;
+  const results = [];
+  for (const r of input) {
+    if (r.review_id === 'R010') continue; // simulate one review the model skipped
+    const t = truth[r.review_id];
+    const sev = sevFor(t, r.rating);
+    const content = {
+      review_id: r.review_id, dish: t.expected_dish, issue_type: t.expected_issue_type, severity: sev,
+      sentiment: sev === 0 ? 'positive' : sev >= 3 ? 'negative' : 'mixed',
+      summary: `ملخص تجريبي (${t.expected_issue_type})`,
+      reply_draft: sev > 0 || r.rating <= 3 ? 'شكراً على ملاحظتك، رح نراجع الموضوع مع الفريق. بيت الصاج' : '',
+    };
+    for (const k of ['dish', 'issue_type']) assert.ok(props[k].enum.includes(content[k]), `${k}=${content[k]} not in enum`);
+    results.push(content);
+  }
+  return { json: { choices: [{ message: { content: JSON.stringify({ results }) } }], usage: { total_tokens: 9000 } } };
 }
 function mockDecisions(agg) {
   const p = agg.llmInput.repeated_patterns_same_dish_same_shift[0];
@@ -89,8 +92,9 @@ function mockDecisions(agg) {
 await runCode('Config', []);
 outputs['Read reviews'] = sheet.map((json) => ({ json }));
 const week = await runCode('Prepare week', outputs['Read reviews']);
-outputs['Classify review (LLM)'] = week.map(mockClassify);
-const parsed = await runCode('Parse classification', outputs['Classify review (LLM)']);
+const [batch] = await runCode('Batch request', week);
+outputs['Classify reviews (LLM)'] = [mockClassify(batch)];
+const parsed = await runCode('Parse classification', outputs['Classify reviews (LLM)']);
 const cols = await runCode('Sheet columns', parsed);
 outputs['Write labels to sheet'] = cols;
 const [agg] = await runCode('Aggregate patterns', cols);
@@ -127,11 +131,12 @@ check('positive reviews never counted as issues (incl. positive shawarma R008/R0
     assert.equal(r.reply_draft, '');
   }
 });
-check('bad model answer (R010) → flagged needs_review, run continues', () => {
+check('one call for the whole week; a review the model skipped (R010) is flagged, run continues', () => {
   const r = parsed.find((p) => p.json.review_id === 'R010').json;
   assert.equal(r.needs_review, true); assert.ok(cols.find((c) => c.json.review_id === 'R010').json.summary.startsWith('⚠️'));
 });
 check('decisions model receives only aggregates (no review text)', () => {
+  assert.equal(outputs['Batch request'].length, 1);
   const s = JSON.stringify(agg.json.llmInput);
   assert.ok(!s.includes('review_text') && !s.includes('ساندويش بارد كأنو'));
 });

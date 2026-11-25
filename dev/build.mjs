@@ -20,7 +20,8 @@ const local = existsSync(localPath) ? JSON.parse(readFileSync(localPath, 'utf8')
 
 const openAiCall = (name, pos, batch) => ({
   id: id(), name, type: 'n8n-nodes-base.httpRequest', typeVersion: 4.2, position: pos,
-  retryOnFail: true, maxTries: 4, waitBetweenTries: 5000,
+  // Two tries only: on a free tier a failed call should not burn the daily quota with retries.
+  retryOnFail: true, maxTries: 2, waitBetweenTries: 5000,
   parameters: {
     method: 'POST',
     // Works with any OpenAI-compatible chat API (Gemini free tier, OpenAI, Groq…): URL and model live in Config.
@@ -30,11 +31,8 @@ const openAiCall = (name, pos, batch) => ({
     sendBody: true,
     specifyBody: 'json',
     jsonBody: batch ? '={{ JSON.stringify($json.openai_body) }}' : '={{ JSON.stringify($json.decisionsBody) }}',
-    options: {
-      timeout: 60000,
-      // One review every 6.5 s keeps under free-tier limits (~10 requests/min). With a paid key: batchSize 5, interval 1000.
-      ...(batch ? { batching: { batch: { batchSize: 1, batchInterval: 6500 } } } : {}),
-    },
+    // The whole week goes in one call, so give the model time to answer all of it.
+    options: { timeout: 180000 },
   },
 });
 
@@ -74,7 +72,8 @@ const nodes = [
     } },
 
   codeNode('Prepare week', '02-prepare-week.js', [X * 2 + 80, y]),
-  openAiCall('Classify review (LLM)', [X * 3 + 80, y], true),
+  codeNode('Batch request', '02b-batch-request.js', [X * 2 + 80, y + 200]),
+  openAiCall('Classify reviews (LLM)', [X * 3 + 80, y], true),
   codeNode('Parse classification', '03-parse-classification.js', [X * 4 + 80, y]),
   codeNode('Sheet columns', '04-sheet-columns.js', [X * 5 + 80, y]),
 
@@ -104,7 +103,7 @@ const nodes = [
   sticky('Note · Classify', `### 1 · تصنيف كل مراجعة
 - الشفت **بينحسب بالكود** من \`visit_datetime\`، مش من الموديل
 - الصحن من **قائمة مغلقة** (المنيو بـ Config)
-- Structured Output (\`json_schema\`) + تحقق بالكود`, [X * 2 + 40, 40], 560, 200, 1),
+- **طلب واحد** لكل مراجعات الأسبوع + تحقق بالكود`, [X * 2 + 40, 40], 560, 200, 1),
   sticky('Note · Count', `### 2 · العدّ بالكود
 صحن × شفت × مشكلة، مرتّب بالتكرار ثم مجموع الحدّة.
 الموديل بياخد **الأرقام الجاهزة** بس.`, [X * 6 + 40, 40], 500, 200, 1),
@@ -115,7 +114,7 @@ HTML بعرض 600px و RTL للجوال.`, [X * 8 + 40, 40], 560, 200, 1),
 
 const byName = Object.fromEntries(nodes.map((n) => [n.name, n]));
 const chain = [
-  'Config', 'Read reviews', 'Prepare week', 'Classify review (LLM)', 'Parse classification',
+  'Config', 'Read reviews', 'Prepare week', 'Batch request', 'Classify reviews (LLM)', 'Parse classification',
   'Sheet columns', 'Write labels to sheet', 'Aggregate patterns', 'Write 3 decisions (LLM)',
   'Build email', 'Send report (Gmail)',
 ];
