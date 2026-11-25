@@ -58,7 +58,7 @@ const sevFor = (t, rating) => (t.expected_issue_type === 'none' ? 0 : t.expected
 function mockClassify(item) {
   const body = item.json.openai_body;
   assert.equal(body.response_format.type, 'json_schema');
-  assert.equal(body.model, 'gemini-3.8-flash');
+  assert.equal(body.model, 'gemini-3.5-flash');
   const input = JSON.parse(body.messages[1].content);
   const props = body.response_format.json_schema.schema.properties.results.items.properties;
   const results = [];

@@ -51,7 +51,9 @@ Read one by one, every complaint looks like bad luck. Counted by day and shift, 
 
 ## The workflow
 
-<!-- WORKFLOW_SCREENSHOT -->
+<img src="assets/workflow.png" alt="The workflow in n8n: two triggers, Config, read the sheet, prepare the week, one batch request to the model, parse, write back to the sheet, count patterns, three decisions, build the email, send with Gmail. An error branch emails me if a scheduled run fails." width="100%">
+
+The canvas in n8n. The whole week goes to the model in **one** request (Batch request), so a run costs two model calls, not forty-one.
 
 ```mermaid
 flowchart LR

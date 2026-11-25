@@ -17,7 +17,7 @@ return [{
     // Credential: "Header Auth" with Name = Authorization, Value = Bearer <your key>.
     //   FREE  · Google Gemini (key from aistudio.google.com/apikey):
     llm_url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    model: 'gemini-3.8-flash',
+    model: 'gemini-3.5-flash',
     //   PAID  · OpenAI: llm_url 'https://api.openai.com/v1/chat/completions', model 'gpt-4.1-mini'
 
     // Week window. reference_date = "today" for the filter.
