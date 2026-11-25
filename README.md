@@ -22,6 +22,12 @@ These are reviews from the demo data, in Arabic, dialect and English, the way th
 
 ## The Sunday email
 
+Straight from my inbox, after a real run with Gemini:
+
+<p align="center"><img src="assets/gmail-real.png" alt="The weekly email in Gmail: a dark header with the restaurant name, the week's main finding (5 cold-shawarma complaints on Friday evening), four numbers, and the first of three decisions with its owner and action." width="640"></p>
+
+What's in it, top to bottom:
+
 <table>
 <tr>
 <td width="42%" valign="top"><img src="assets/email-phone.png" alt="The weekly email on a phone" width="100%"></td>
@@ -37,7 +43,7 @@ These are reviews from the demo data, in Arabic, dialect and English, the way th
 
 **Draft replies.** One per unhappy review, in the customer's language, worst first. They never promise a refund and never blame the customer. Someone still reads them before posting.
 
-<sub>The real email from a run in n8n, with Gemini writing the decisions and replies.</sub>
+<sub>The same email on a phone, about 390px wide.</sub>
 
 </td>
 </tr>
