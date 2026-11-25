@@ -140,8 +140,8 @@ check('decisions model receives only aggregates (no review text)', () => {
   const s = JSON.stringify(agg.json.llmInput);
   assert.ok(!s.includes('review_text') && !s.includes('ساندويش بارد كأنو'));
 });
-check('email: RTL, ≤600px, all user text escaped', () => {
-  assert.ok(mail.json.html.includes('dir="rtl"') && mail.json.html.includes('max-width:600px'));
+check('email: RTL, ≤640px, all user text escaped', () => {
+  assert.ok(mail.json.html.includes('dir="rtl"') && mail.json.html.includes('max-width:640px'));
   assert.ok(!/<script/i.test(mail.json.html));
 });
 check('sheet write-back has exactly the label columns', () => {

@@ -97,7 +97,8 @@ const nodes = [
   { id: id(), name: 'Send report (Gmail)', type: 'n8n-nodes-base.gmail', typeVersion: 2.1, position: [X * 10 + 80, y],
     parameters: {
       sendTo: '={{ $json.to }}', subject: '={{ $json.subject }}', emailType: 'html', message: '={{ $json.html }}',
-      options: { appendAttribution: false },
+      // The name shown in the inbox, instead of the Gmail account owner's name
+      options: { appendAttribution: false, senderName: "={{ $('Config').first().json.restaurant_name }} · تقرير المطبخ" },
     } },
 
   sticky('Note · Classify', `### 1 · تصنيف كل مراجعة
@@ -109,7 +110,7 @@ const nodes = [
 الموديل بياخد **الأرقام الجاهزة** بس.`, [X * 6 + 40, 40], 500, 200, 1),
   sticky('Note · Report', `### 3 · قرارات + إيميل
 3 قرارات تشغيلية + جدول الأنماط + مسودات الردود.
-HTML بعرض 600px و RTL للجوال.`, [X * 8 + 40, 40], 560, 200, 1),
+HTML بعرض 640px و RTL للجوال.`, [X * 8 + 40, 40], 560, 200, 1),
 ];
 
 const byName = Object.fromEntries(nodes.map((n) => [n.name, n]));

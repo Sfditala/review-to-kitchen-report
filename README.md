@@ -115,7 +115,7 @@ $ node dev/run-local.mjs
 ✅ positive reviews never counted as issues (incl. positive shawarma R008/R036/R040)
 ✅ bad model answer (R010) → flagged needs_review, run continues
 ✅ decisions model receives only aggregates (no review text)
-✅ email: RTL, ≤600px, all user text escaped
+✅ email: RTL, ≤640px, all user text escaped
 ✅ sheet write-back has exactly the label columns
 ```
 

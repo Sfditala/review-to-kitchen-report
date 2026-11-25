@@ -2,7 +2,7 @@
   "name": "D0 · error-alert",
   "nodes": [
     {
-      "id": "8d62d2ac-179b-4a56-a242-b5c3b6703086",
+      "id": "0d8eaa61-93af-4914-9c20-2f48b98fa4fa",
       "name": "On workflow error",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
@@ -13,7 +13,7 @@
       "parameters": {}
     },
     {
-      "id": "eb5524a0-cd81-4113-87cc-c954ef0a2c08",
+      "id": "be8287bb-650a-4928-9d2d-983e11fde97e",
       "name": "Email the error",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,

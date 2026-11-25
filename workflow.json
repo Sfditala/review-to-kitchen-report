@@ -2,7 +2,7 @@
   "name": "D1 · review-to-kitchen-report",
   "nodes": [
     {
-      "id": "096e4c78-6ecd-448c-844d-60f615407270",
+      "id": "48335a4f-bef2-4deb-a014-bae0d424680f",
       "name": "Note · Setup",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -18,7 +18,7 @@
       }
     },
     {
-      "id": "07764f0a-1a65-4c71-9310-9e287a1576c1",
+      "id": "c3e805ff-eaeb-402c-b057-3d327b4efc0a",
       "name": "Every Sunday 09:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -43,7 +43,7 @@
       }
     },
     {
-      "id": "5da06b18-aec6-41b2-98f6-c60d94405132",
+      "id": "a69c0138-96c6-4f62-a0cd-94138862ac6f",
       "name": "Run manually (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -54,7 +54,7 @@
       "parameters": {}
     },
     {
-      "id": "4abdddd7-a2cd-4f42-b0d9-70caff4ce76f",
+      "id": "54912273-2482-49c5-868b-ff9cd8196814",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -67,7 +67,7 @@
       }
     },
     {
-      "id": "97c981e4-f478-40f4-a9e0-42c9e41cce79",
+      "id": "bd1153e1-8980-4f58-9332-a52db92a794f",
       "name": "Read reviews",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -97,7 +97,7 @@
       }
     },
     {
-      "id": "563a387e-c6d9-4527-ac01-b21cb2f440d5",
+      "id": "c1a2b94b-1c1e-4016-8f1e-e7480740b32c",
       "name": "Prepare week",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -110,7 +110,7 @@
       }
     },
     {
-      "id": "67e0bbdd-cac6-4f4a-b581-06d0fe953ba8",
+      "id": "98548d83-ad38-4e1b-bb60-98ddb12e9dc5",
       "name": "Batch request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -123,7 +123,7 @@
       }
     },
     {
-      "id": "bfc2feb5-2c67-46f6-af6f-fc6c75dc9514",
+      "id": "18c65ea1-83af-4e31-b338-790ef0689485",
       "name": "Classify reviews (LLM)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -148,7 +148,7 @@
       }
     },
     {
-      "id": "0ccb5394-9db6-4197-baa3-5dff79ca5c28",
+      "id": "a946e7a7-396f-4348-a8f8-a6a34d8cc43c",
       "name": "Parse classification",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -161,7 +161,7 @@
       }
     },
     {
-      "id": "97d2c497-6f80-4928-a9f7-92f25b4fb37e",
+      "id": "5f067271-0f1d-4a21-8230-fe7a1d599f05",
       "name": "Sheet columns",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -174,7 +174,7 @@
       }
     },
     {
-      "id": "2340de1a-a6e2-4ed2-9452-9981db35f9a0",
+      "id": "6cd93272-56ee-46e9-833b-69ea464a913f",
       "name": "Write labels to sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -282,7 +282,7 @@
       }
     },
     {
-      "id": "81a73ba6-e92d-4629-8610-14a37d9134fc",
+      "id": "676f9ac0-8aa7-4c83-9516-462feb378af4",
       "name": "Aggregate patterns",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -295,7 +295,7 @@
       }
     },
     {
-      "id": "90be2b57-22a5-4b4c-ac02-941b190d0a83",
+      "id": "aed65670-5b65-48b7-bc14-115b4d4eddff",
       "name": "Write 3 decisions (LLM)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -320,7 +320,7 @@
       }
     },
     {
-      "id": "de7134a7-c57e-4c80-a919-23b124cc3708",
+      "id": "8221ca93-44e9-4e89-824e-5c3acd930bef",
       "name": "Build email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -329,11 +329,11 @@
         300
       ],
       "parameters": {
-        "jsCode": "// Build a mobile-friendly RTL HTML email (inline styles only: Gmail strips <style>).\nconst cfg = $('Config').first().json;\nconst agg = $('Aggregate patterns').first().json;\nconst rows = $('Parse classification').all().map((i) => i.json);\nconst res = $input.first().json;\n\nlet plan;\ntry {\n  plan = JSON.parse(res.choices[0].message.content);\n} catch (e) {\n  throw new Error('Could not parse decisions from OpenAI: ' + JSON.stringify(res).slice(0, 300));\n}\nconst decisions = (plan.decisions || []).slice(0, 3);\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst sevColor = (s) => (s >= 5 ? '#b42318' : s >= 3 ? '#c2410c' : '#a16207');\nconst prioColor = { 'عالية': '#b42318', 'متوسطة': '#c2410c', 'منخفضة': '#4b5563' };\nconst stars = (n) => (n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '');\nconst week = rows[0] ? rows[0].week : { from: '', to: '' };\nconst { stats } = agg;\n\nconst FONT = \"font-family:Tahoma,Arial,sans-serif;\";\nconst card = 'background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin:0 0 12px;';\nconst h2 = 'font-size:16px;margin:22px 0 10px;color:#111827;';\n\nconst statCell = (label, value, color) =>\n  `<td style=\"width:25%;text-align:center;padding:10px 4px;background:#f9fafb;border-radius:8px;\">\n     <div style=\"font-size:20px;font-weight:bold;color:${color};\">${esc(value)}</div>\n     <div style=\"font-size:12px;color:#6b7280;\">${label}</div></td>`;\n\nconst decisionsHtml = decisions.map((d, i) => `\n  <div style=\"${card}border-right:4px solid ${prioColor[d.priority] || '#4b5563'};\">\n    <div style=\"font-size:12px;color:${prioColor[d.priority] || '#4b5563'};font-weight:bold;\">قرار ${i + 1} · أولوية ${esc(d.priority)} · ${esc(d.owner)}</div>\n    <div style=\"font-size:15px;font-weight:bold;margin:6px 0;color:#111827;\">${esc(d.title)}</div>\n    <div style=\"font-size:13px;color:#374151;margin:0 0 6px;\">📊 ${esc(d.evidence)}</div>\n    <div style=\"font-size:13px;color:#111827;background:#f0fdf4;border-radius:6px;padding:8px;\">✅ ${esc(d.action)}</div>\n  </div>`).join('');\n\nconst tableRow = (cells, header = false) =>\n  `<tr>${cells.map((c) => `<${header ? 'th' : 'td'} style=\"padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:right;font-size:13px;${header ? 'color:#6b7280;font-weight:normal;' : ''}\">${c}</${header ? 'th' : 'td'}>`).join('')}</tr>`;\n\nconst repeated = agg.byDishShiftIssue.filter((g) => g.count >= 2);\nconst singles = agg.byDishShiftIssue.filter((g) => g.count === 1).length;\nconst patternsHtml = repeated.length\n  ? `<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\">\n      ${tableRow(['الصحن · الشفت', 'المشكلة', 'العدد', 'الحدّة'], true)}\n      ${repeated.map((g) => tableRow([\n        `<b>${esc(g.dish)}</b><br><span style=\"color:#6b7280;font-size:12px;\">${esc(g.shift)}</span>`,\n        esc(g.issue_ar), `<b>${g.count}</b>`,\n        `<span style=\"color:${sevColor(g.severity_avg)};\">${g.severity_avg}/5</span>`])).join('')}\n    </table>`\n  : '<p style=\"font-size:13px;color:#6b7280;\">ما في أنماط متكررة لنفس الصحن بنفس الشفت هالأسبوع.</p>';\n\nconst weekPart = agg.byIssueWeekPart.filter((g) => g.count >= 2);\nconst weekPartHtml = weekPart.length\n  ? `<div style=\"font-size:13px;font-weight:bold;margin:16px 0 0;color:#111827;\">📅 حسب الفترة (كل الأصناف)</div>\n    <table role=\"presentation\" style=\"width:100%;border-collapse:collapse;margin-top:4px;\">\n      ${tableRow(['المشكلة', 'الفترة', 'العدد'], true)}\n      ${weekPart.map((g) => tableRow([esc(g.issue_ar), esc(g.week_part), `<b>${g.count}</b>`])).join('')}\n    </table>` : '';\n\nconst negatives = rows.filter((r) => r.reply_draft).sort((a, b) => b.severity - a.severity);\nconst repliesHtml = negatives.map((r) => `\n  <div style=\"${card}\">\n    <div style=\"font-size:12px;color:#6b7280;\">${esc(r.review_id)} · ${esc(r.source)} · ${esc(r.shift)} · <span style=\"color:#d97706;\">${stars(r.rating)}</span></div>\n    <div style=\"font-size:13px;color:#374151;margin:6px 0;\">«${esc(r.review_text.slice(0, 220))}»</div>\n    <div style=\"font-size:12px;color:${sevColor(r.severity)};margin:0 0 6px;\">${esc(r.summary)}</div>\n    <div style=\"font-size:13px;color:#111827;background:#f3f4f6;border-radius:6px;padding:8px;\" dir=\"auto\">✍️ ${esc(r.reply_draft)}</div>\n  </div>`).join('');\n\nconst sheetUrl = 'https://docs.google.com' + `/spreadsheets/d/${cfg.sheet_id}`;\n\nconst html = `<!doctype html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n<body style=\"margin:0;padding:0;background:#f3f4f6;\">\n<div dir=\"rtl\" style=\"${FONT}max-width:600px;margin:0 auto;padding:16px;background:#f3f4f6;color:#111827;line-height:1.6;\">\n  <div style=\"font-size:13px;color:#6b7280;\">${esc(cfg.restaurant_name)} · تقرير المراجعات الأسبوعي</div>\n  <div style=\"font-size:12px;color:#9ca3af;margin-bottom:12px;\">${esc(week.from)} ← ${esc(week.to)}</div>\n\n  <div style=\"background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:14px 16px;font-size:16px;font-weight:bold;color:#9a3412;\">${esc(plan.headline)}</div>\n\n  <table role=\"presentation\" style=\"width:100%;border-collapse:separate;border-spacing:6px;margin:12px 0;\"><tr>\n    ${statCell('مراجعة', stats.total, '#111827')}\n    ${statCell('فيها مشكلة', stats.issues, '#c2410c')}\n    ${statCell('إيجابية', stats.positive, '#15803d')}\n    ${statCell('معدّل التقييم', stats.avg_rating ?? '-', '#d97706')}\n  </tr></table>\n\n  <h2 style=\"${h2}\">🎯 3 قرارات لهالأسبوع</h2>\n  ${decisionsHtml}\n\n  <h2 style=\"${h2}\">🔁 الأنماط المتكررة (نفس الصحن · نفس الشفت)</h2>\n  <div style=\"${card}\">${patternsHtml}${weekPartHtml}\n    <div style=\"font-size:12px;color:#6b7280;margin-top:8px;\">+ ${singles} شكوى منفردة (التفاصيل بالشيت)</div>\n  </div>\n\n  <h2 style=\"${h2}\">✍️ مسودات ردود جاهزة (${negatives.length})</h2>\n  <div style=\"font-size:12px;color:#6b7280;margin:-4px 0 8px;\">راجعها قبل النشر. المسودة ما بتوعد بتعويض.</div>\n  ${repliesHtml}\n\n  ${stats.needs_review ? `<div style=\"${card}color:#b42318;font-size:13px;\">⚠️ ${stats.needs_review} مراجعة ما انصنّفت تلقائياً، معلّمة بالشيت.</div>` : ''}\n\n  <div style=\"text-align:center;margin:20px 0 8px;\">\n    <a href=\"${sheetUrl}\" style=\"display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;\">افتح الشيت الكامل</a>\n  </div>\n  <div style=\"font-size:11px;color:#9ca3af;text-align:center;\">تقرير تلقائي · التصنيف بالذكاء الاصطناعي، والعدّ بالكود</div>\n</div></body></html>`;\n\nreturn [{\n  json: {\n    to: cfg.report_to,\n    subject: `📋 مراجعات الأسبوع · ${cfg.restaurant_name} · ${week.from} ← ${week.to}`,\n    headline: plan.headline,\n    decisions,\n    html,\n  },\n}];\n"
+        "jsCode": "// Build a mobile-friendly RTL HTML email (inline styles only: Gmail strips <style>).\nconst cfg = $('Config').first().json;\nconst agg = $('Aggregate patterns').first().json;\nconst rows = $('Parse classification').all().map((i) => i.json);\nconst res = $input.first().json;\n\nlet plan;\ntry {\n  plan = JSON.parse(res.choices[0].message.content);\n} catch (e) {\n  throw new Error('Could not parse decisions from the model: ' + JSON.stringify(res).slice(0, 300));\n}\nconst decisions = (plan.decisions || []).slice(0, 3);\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst stars = (n) => (n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '');\nconst { stats } = agg;\n\n// \"15 إلى 21 نوفمبر 2026\": a dash between two numbers gets flipped in Arabic text, a word doesn't\nconst MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];\nconst week = rows[0] ? rows[0].week : { from: '', to: '' };\nfunction weekLabel(from, to) {\n  if (!from || !to) return '';\n  const [y1, m1, d1] = from.split('-').map(Number);\n  const [y2, m2, d2] = to.split('-').map(Number);\n  if (y1 === y2 && m1 === m2) return `${d1} إلى ${d2} ${MONTHS[m1 - 1]} ${y1}`;\n  return `${d1} ${MONTHS[m1 - 1]} إلى ${d2} ${MONTHS[m2 - 1]} ${y2}`;\n}\nconst weekText = weekLabel(week.from, week.to);\n\n// Palette\nconst C = {\n  page: '#f4f1ec', card: '#ffffff', line: '#ebe6dd', ink: '#1c1917', soft: '#57534e', mute: '#8a8178',\n  brand: '#1c1917', accent: '#ea580c', accentBg: '#fff4ec', accentLine: '#fdba8c',\n  green: '#15803d', greenBg: '#effaf2', red: '#b42318', amber: '#b45309',\n};\nconst FONT = \"font-family:'Segoe UI',Tahoma,Arial,sans-serif;\";\nconst prio = { 'عالية': C.red, 'متوسطة': C.amber, 'منخفضة': C.soft };\nconst sevColor = (s) => (s >= 5 ? C.red : s >= 3 ? C.accent : C.amber);\nconst pill = (text, color) =>\n  `<span style=\"display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid ${color};color:${color};font-size:12px;font-weight:600;margin-left:6px;\">${esc(text)}</span>`;\nconst section = (title, inner, note = '') => `\n  <tr><td style=\"padding:28px 24px 0;\">\n    <div style=\"font-size:18px;font-weight:700;color:${C.ink};margin:0 0 4px;\">${title}</div>\n    ${note ? `<div style=\"font-size:13px;color:${C.mute};margin:0 0 12px;\">${note}</div>` : '<div style=\"height:12px;\"></div>'}\n    ${inner}\n  </td></tr>`;\n\n// Stats\nconst statCell = (value, label, color) => `\n  <td width=\"25%\" style=\"padding:0 4px;\">\n    <div style=\"background:${C.card};border:1px solid ${C.line};border-radius:12px;padding:14px 4px;text-align:center;\">\n      <div style=\"font-size:28px;font-weight:700;color:${color};line-height:1.1;\">${esc(value)}</div>\n      <div style=\"font-size:13px;color:${C.mute};margin-top:4px;\">${label}</div>\n    </div>\n  </td>`;\n\n// Decisions\nconst decisionsHtml = decisions.map((d, i) => `\n  <div style=\"background:${C.card};border:1px solid ${C.line};border-radius:14px;padding:18px 18px 16px;margin:0 0 12px;\">\n    <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;\"><tr>\n      <td width=\"36\" valign=\"top\" style=\"padding-left:10px;\">\n        <div style=\"width:28px;height:28px;border-radius:50%;background:${C.brand};color:#fff;font-size:14px;font-weight:700;text-align:center;line-height:28px;\">${i + 1}</div>\n      </td>\n      <td valign=\"top\">\n        <div style=\"margin:0 0 6px;\">${pill('أولوية ' + d.priority, prio[d.priority] || C.soft)}${pill(d.owner, C.soft)}</div>\n        <div style=\"font-size:17px;font-weight:700;color:${C.ink};margin:0 0 8px;line-height:1.5;\">${esc(d.title)}</div>\n        <div style=\"font-size:14px;color:${C.soft};margin:0 0 10px;line-height:1.7;\">${esc(d.evidence)}</div>\n        <div style=\"font-size:15px;color:${C.ink};background:${C.greenBg};border-radius:10px;padding:10px 12px;line-height:1.7;\">\n          <b style=\"color:${C.green};\">الإجراء:</b> ${esc(d.action)}</div>\n      </td>\n    </tr></table>\n  </div>`).join('');\n\n// Patterns\nconst tableRow = (cells, header = false) =>\n  `<tr>${cells.map((c, i) => `<${header ? 'th' : 'td'} style=\"padding:10px 8px;border-bottom:1px solid ${C.line};text-align:${i >= 2 ? 'center' : 'right'};font-size:14px;${header ? `color:${C.mute};font-weight:600;font-size:12px;` : `color:${C.ink};`}\">${c}</${header ? 'th' : 'td'}>`).join('')}</tr>`;\nconst repeated = agg.byDishShiftIssue.filter((g) => g.count >= 2);\nconst singles = agg.byDishShiftIssue.filter((g) => g.count === 1).length;\nconst weekPart = agg.byIssueWeekPart.filter((g) => g.count >= 2);\nconst patternsHtml = `\n  <div style=\"background:${C.card};border:1px solid ${C.line};border-radius:14px;padding:6px 14px 14px;\">\n    ${repeated.length ? `<table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;\">\n      ${tableRow(['الصحن · الشفت', 'المشكلة', 'العدد', 'الحدّة'], true)}\n      ${repeated.map((g) => tableRow([\n        `<b>${esc(g.dish)}</b><div style=\"color:${C.mute};font-size:12px;\">${esc(g.shift)}</div>`,\n        esc(g.issue_ar), `<b style=\"font-size:18px;\">${g.count}</b>`,\n        `<span style=\"color:${sevColor(g.severity_avg)};font-weight:600;\">${g.severity_avg}/5</span>`])).join('')}\n    </table>` : `<div style=\"font-size:14px;color:${C.mute};padding:10px 0;\">ما في أنماط متكررة لنفس الصحن بنفس الشفت هالأسبوع.</div>`}\n    ${weekPart.length ? `<div style=\"font-size:13px;font-weight:700;color:${C.soft};margin:16px 0 0;\">حسب الفترة (كل الأصناف)</div>\n    <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;\">\n      ${weekPart.map((g) => tableRow([esc(g.issue_ar), esc(g.week_part), `<b style=\"font-size:18px;\">${g.count}</b>`, ''])).join('')}\n    </table>` : ''}\n    <div style=\"font-size:13px;color:${C.mute};margin-top:12px;\">+ ${singles} شكوى منفردة، تفاصيلها بالشيت</div>\n  </div>`;\n\n// Draft replies\nconst negatives = rows.filter((r) => r.reply_draft).sort((a, b) => b.severity - a.severity);\nconst repliesHtml = negatives.map((r) => `\n  <div style=\"background:${C.card};border:1px solid ${C.line};border-radius:14px;padding:14px 16px;margin:0 0 10px;\">\n    <div style=\"font-size:12px;color:${C.mute};\">${esc(r.source)} · ${esc(r.shift)} · <span style=\"color:#d97706;letter-spacing:1px;\">${stars(r.rating)}</span></div>\n    <div style=\"font-size:14px;color:${C.ink};margin:8px 0;line-height:1.7;\">«${esc(r.review_text.slice(0, 220))}»</div>\n    <div style=\"font-size:12px;color:${sevColor(r.severity)};font-weight:600;margin:0 0 8px;\">${esc(r.summary)}</div>\n    <div style=\"font-size:14px;color:${C.soft};background:#f7f5f1;border-radius:10px;padding:10px 12px;line-height:1.7;\" dir=\"auto\">${esc(r.reply_draft)}</div>\n  </div>`).join('');\n\nconst sheetUrl = 'https://docs.google.com' + `/spreadsheets/d/${cfg.sheet_id}`;\n\nconst html = `<!doctype html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n<body style=\"margin:0;padding:0;background:${C.page};\">\n<table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;background:${C.page};\"><tr><td align=\"center\" style=\"padding:24px 10px;\">\n<table role=\"presentation\" width=\"100%\" dir=\"rtl\" style=\"${FONT}max-width:640px;border-collapse:collapse;color:${C.ink};line-height:1.6;\">\n\n  <tr><td style=\"background:${C.brand};border-radius:18px 18px 0 0;padding:26px 24px 22px;\">\n    <div style=\"font-size:13px;color:#d6d3d1;letter-spacing:.5px;\">تقرير المطبخ الأسبوعي</div>\n    <div style=\"font-size:26px;font-weight:800;color:#ffffff;margin:4px 0 2px;\">${esc(cfg.restaurant_name)}</div>\n    <div style=\"font-size:14px;color:#a8a29e;\">${esc(weekText)} · ${stats.total} مراجعة</div>\n  </td></tr>\n\n  <tr><td style=\"background:${C.accentBg};border:1px solid ${C.accentLine};border-top:0;border-radius:0 0 18px 18px;padding:18px 24px;\">\n    <div style=\"font-size:12px;font-weight:700;color:${C.accent};margin:0 0 4px;\">أهم إشي هالأسبوع</div>\n    <div style=\"font-size:19px;font-weight:700;color:#7c2d12;line-height:1.6;\">${esc(plan.headline)}</div>\n  </td></tr>\n\n  <tr><td style=\"padding:16px 20px 0;\">\n    <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;\"><tr>\n      ${statCell(stats.total, 'مراجعة', C.ink)}\n      ${statCell(stats.issues, 'فيها مشكلة', C.accent)}\n      ${statCell(stats.positive, 'إيجابية', C.green)}\n      ${statCell(stats.avg_rating ?? '-', 'التقييم', C.amber)}\n    </tr></table>\n  </td></tr>\n\n  ${section('3 قرارات لهالأسبوع', decisionsHtml, 'كل قرار مبني على أرقام الأسبوع، وإله مسؤول وإجراء بينفحص بالشفت الجاي.')}\n  ${section('الأنماط المتكررة', patternsHtml, 'نفس الصحن، نفس الشفت، نفس المشكلة.')}\n  ${negatives.length ? section(`مسودات ردود جاهزة (${negatives.length})`, repliesHtml, 'راجعها قبل النشر. ما بتوعد بتعويض وما بتلوم الزبون.') : ''}\n  ${stats.needs_review ? `<tr><td style=\"padding:16px 24px 0;\"><div style=\"background:#fff1f0;border:1px solid #fecaca;border-radius:12px;padding:12px 14px;font-size:14px;color:${C.red};\">⚠️ ${stats.needs_review} مراجعة ما انصنّفت تلقائياً، معلّمة بالشيت.</div></td></tr>` : ''}\n\n  <tr><td align=\"center\" style=\"padding:28px 24px 8px;\">\n    <a href=\"${sheetUrl}\" style=\"display:inline-block;background:${C.brand};color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:999px;font-size:15px;font-weight:600;\">افتح الشيت الكامل</a>\n  </td></tr>\n  <tr><td align=\"center\" style=\"padding:8px 24px 0;font-size:12px;color:${C.mute};\">\n    تقرير تلقائي كل أحد الساعة 9 · التصنيف بالذكاء الاصطناعي، والعدّ بالكود\n  </td></tr>\n\n</table>\n</td></tr></table>\n</body></html>`;\n\nreturn [{\n  json: {\n    to: cfg.report_to,\n    subject: `تقرير المطبخ · ${cfg.restaurant_name} · ${weekText}`,\n    headline: plan.headline,\n    decisions,\n    html,\n  },\n}];\n"
       }
     },
     {
-      "id": "eae3cf9b-7108-4d7b-b2a0-4c3e84f0b13a",
+      "id": "3f47038c-c6a6-43a1-9337-88ff3d04a95b",
       "name": "Send report (Gmail)",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
@@ -347,12 +347,13 @@
         "emailType": "html",
         "message": "={{ $json.html }}",
         "options": {
-          "appendAttribution": false
+          "appendAttribution": false,
+          "senderName": "={{ $('Config').first().json.restaurant_name }} · تقرير المطبخ"
         }
       }
     },
     {
-      "id": "6912d573-105d-473e-a995-0ff059362f2e",
+      "id": "29b94224-f331-484d-a487-40ddc75bb52d",
       "name": "Note · Classify",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -368,7 +369,7 @@
       }
     },
     {
-      "id": "6d816615-d06f-47a0-b6d1-641f09514060",
+      "id": "7c70fa3b-acbd-40e3-ad0c-3553415fd3da",
       "name": "Note · Count",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -384,7 +385,7 @@
       }
     },
     {
-      "id": "8d4188e0-8aef-44cd-bc0c-cdab73b7e0a8",
+      "id": "42393f1a-2241-403f-876f-7fad0f6f7591",
       "name": "Note · Report",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -393,7 +394,7 @@
         40
       ],
       "parameters": {
-        "content": "### 3 · قرارات + إيميل\n3 قرارات تشغيلية + جدول الأنماط + مسودات الردود.\nHTML بعرض 600px و RTL للجوال.",
+        "content": "### 3 · قرارات + إيميل\n3 قرارات تشغيلية + جدول الأنماط + مسودات الردود.\nHTML بعرض 640px و RTL للجوال.",
         "width": 560,
         "height": 200,
         "color": 1
